@@ -60,6 +60,60 @@ class GlassCard extends StatelessWidget {
   }
 }
 
+/// BdApps compliance: subscription pricing (incl. VAT+SC+SD) and supported
+/// platform must be clearly displayed on both the paywall and the login
+/// screen, matching the submitted FAQ.
+class PricingNotice extends StatelessWidget {
+  final Color? foreground;
+  const PricingNotice({super.key, this.foreground});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = foreground ?? Colors.white;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.sell_rounded, color: color, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Subscription price (Incl. VAT+SC+SD)',
+                style: TextStyle(
+                  color: color.withValues(alpha: 0.85),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Robi: ৳2.78/day  ·  Airtel: ৳5.56/day',
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Robi and Airtel subscribers only. Available on Android.',
+            style: TextStyle(color: color.withValues(alpha: 0.65), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class AuthPrimaryButton extends StatelessWidget {
   final String label;
   final bool loading;
