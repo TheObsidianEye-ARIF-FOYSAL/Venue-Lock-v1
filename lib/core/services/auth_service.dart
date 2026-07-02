@@ -17,6 +17,9 @@ class AuthService extends ChangeNotifier {
   String get adminEmail => _auth.currentUser?.email ?? '';
   String get displayName =>
       _auth.currentUser?.displayName ?? _auth.currentUser?.email ?? '';
+  bool get isGoogleUser => _auth.currentUser?.providerData
+          .any((p) => p.providerId == 'google.com') ??
+      false;
 
   AuthService() {
     _auth.authStateChanges().listen((_) => notifyListeners());
@@ -99,6 +102,56 @@ class AuthService extends ChangeNotifier {
       await _googleSignIn.signOut();
     }
     notifyListeners();
+  }
+
+  /// Deletes the signed-in user's Firebase account. Firebase requires a
+  /// "recent login" for this sensitive operation, so the caller must
+  /// re-authenticate first: pass [password] for email/password accounts,
+  /// or nothing for Google accounts (re-authenticated via Google instead).
+  /// Returns a user-facing error message, or null on success.
+  Future<String?> deleteAccount({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) return 'No account is signed in.';
+    try {
+      if (isGoogleUser) {
+        await _reauthenticateWithGoogle(user);
+      } else {
+        if (password == null || password.isEmpty) {
+          return 'Password required to confirm deletion.';
+        }
+        await _reauthenticateWithPassword(user, password);
+      }
+      await user.delete();
+      if (!kIsWeb) {
+        await _googleSignIn.signOut();
+      }
+      notifyListeners();
+      return null;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        return 'Sign-in cancelled.';
+      }
+      return 'Google sign-in failed. Please try again.';
+    } on FirebaseAuthException catch (e) {
+      return _friendlyError(e.code);
+    } catch (_) {
+      return 'Account deletion failed. Please try again.';
+    }
+  }
+
+  Future<void> _reauthenticateWithPassword(User user, String password) async {
+    final credential =
+        EmailAuthProvider.credential(email: user.email!, password: password);
+    await user.reauthenticateWithCredential(credential);
+  }
+
+  Future<void> _reauthenticateWithGoogle(User user) async {
+    await _ensureGoogleSignInInitialized();
+    final account = await _googleSignIn.authenticate();
+    final idToken = account.authentication.idToken;
+    if (idToken == null) throw Exception('Google sign-in failed.');
+    final credential = GoogleAuthProvider.credential(idToken: idToken);
+    await user.reauthenticateWithCredential(credential);
   }
 
   static String _friendlyError(String code) {

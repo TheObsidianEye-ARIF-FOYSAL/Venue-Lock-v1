@@ -214,6 +214,15 @@ class ProfileScreen extends StatelessWidget {
                               }
                             },
                           ).animate().fadeIn(delay: 460.ms),
+                          const SizedBox(height: 12),
+                          _ActionTile(
+                            icon: Icons.delete_forever_rounded,
+                            label: 'Delete Account',
+                            subtitle:
+                                'Permanently delete your account and data',
+                            destructive: true,
+                            onTap: () => _handleDeleteAccount(context),
+                          ).animate().fadeIn(delay: 520.ms),
                         ],
                       ),
                     ),
