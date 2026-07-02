@@ -141,7 +141,11 @@ class ProfileScreen extends StatelessWidget {
                             ],
                           ).animate().fadeIn(delay: 320.ms).slideY(
                               begin: 0.08, delay: 320.ms, duration: 400.ms),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
+                          const _AppearanceCard()
+                              .animate()
+                              .fadeIn(delay: 380.ms),
+                          const SizedBox(height: 24),
                           _ActionTile(
                             icon: Icons.logout_rounded,
                             label: 'Logout',
