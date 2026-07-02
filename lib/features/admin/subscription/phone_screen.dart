@@ -66,8 +66,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'We\'ll send a one-time code to verify your Robi or '
-                    'Airtel number.',
+                    'We\'ll send a 6-digit OTP to verify your number.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 20),
