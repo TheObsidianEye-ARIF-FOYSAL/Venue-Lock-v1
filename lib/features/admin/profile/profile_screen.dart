@@ -41,6 +41,122 @@ class ProfileScreen extends StatelessWidget {
     return result ?? false;
   }
 
+  Future<void> _handleDeleteAccount(BuildContext context) async {
+    final auth = context.read<AuthService>();
+    final isGoogleUser = auth.isGoogleUser;
+    String? password;
+
+    if (isGoogleUser) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Account'),
+          content: const Text(
+            'This will permanently delete your account and cancel your '
+            'subscription. You will be asked to sign in with Google to '
+            'confirm.',
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: kError),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Delete Account'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    } else {
+      final ctrl = TextEditingController();
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'This will permanently delete your account, all data, '
+                'and cancel your subscription.',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: ctrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Enter your password to confirm',
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: kError),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Delete Account'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+      password = ctrl.text;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Deleting account…'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Cancel the subscription first, as a courtesy, so the user isn't
+    // still being billed for an account they can no longer log into.
+    if (context.mounted) {
+      await context.read<SubscriptionService>().unsubscribe();
+    }
+    final error = context.mounted
+        ? await context.read<AuthService>().deleteAccount(password: password)
+        : 'No account is signed in.';
+
+    if (context.mounted) Navigator.of(context).pop(); // close loader
+    if (!context.mounted) return;
+
+    if (error == null) {
+      context.go('/admin/subscribe');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: kError,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
