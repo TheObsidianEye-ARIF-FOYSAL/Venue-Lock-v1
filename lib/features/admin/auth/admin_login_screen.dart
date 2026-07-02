@@ -429,7 +429,9 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
     if (!mounted) return;
     setState(() => _loading = false);
 
-    if (error != null) {
+    if (error == null) {
+      widget.onSuccess();
+    } else if (!error.contains('cancelled')) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error),
@@ -437,8 +439,6 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-    } else {
-      widget.onSuccess();
     }
   }
 
