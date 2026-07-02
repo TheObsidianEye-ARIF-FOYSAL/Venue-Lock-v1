@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/subscription_service.dart';
+import 'widgets/auth_widgets.dart';
 
 class PhoneScreen extends StatefulWidget {
   const PhoneScreen({super.key});
@@ -61,20 +62,14 @@ class _PhoneScreenState extends State<PhoneScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1E1B4B), Color(0xFF3730A3)],
-          ),
-        ),
+        decoration: authGradient,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _BackButton(onTap: () => context.pop()),
+                AuthBackButton(onTap: () => context.pop()),
                 const SizedBox(height: 32),
                 Expanded(
                   child: Center(
@@ -119,7 +114,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                               ),
                             ).animate().fadeIn(delay: 250.ms),
                             const SizedBox(height: 28),
-                            _GlassCard(
+                            GlassCard(
                               child: Form(
                                 key: _formKey,
                                 child: Column(
@@ -144,13 +139,13 @@ class _PhoneScreenState extends State<PhoneScreen> {
                                             Icons.phone_android_outlined,
                                             color: Colors.white70),
                                         filled: true,
-                                        fillColor:
-                                            Colors.white.withValues(alpha: 0.06),
+                                        fillColor: Colors.white
+                                            .withValues(alpha: 0.06),
                                       ),
                                       validator: _validate,
                                     ),
                                     const SizedBox(height: 20),
-                                    _PrimaryButton(
+                                    AuthPrimaryButton(
                                       label: 'Send OTP',
                                       loading: _loading,
                                       onTap: _submit,
@@ -170,94 +165,6 @@ class _PhoneScreenState extends State<PhoneScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _BackButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _BackButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-        ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded,
-            color: Colors.white, size: 18),
-      ),
-    );
-  }
-}
-
-class _GlassCard extends StatelessWidget {
-  final Widget child;
-  const _GlassCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final bool loading;
-  final VoidCallback onTap;
-  const _PrimaryButton(
-      {required this.label, required this.loading, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [kIndigoLight, kIndigo],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: kIndigo.withValues(alpha: 0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: loading ? null : onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          minimumSize: const Size.fromHeight(52),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-        child: loading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2.5, color: Colors.white),
-              )
-            : Text(label,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700)),
       ),
     );
   }
