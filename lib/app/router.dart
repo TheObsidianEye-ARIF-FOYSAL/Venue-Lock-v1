@@ -19,12 +19,12 @@ final router = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
     final path = state.uri.path;
-    if (!path.startsWith('/admin')) return null;
-
     final isSubscribePath = path.startsWith('/admin/subscribe');
     final isLoginPath = path == '/admin/login';
 
-    // Gate 1: BdApps-style subscription required before anything else.
+    // Gate 1: BdApps-style subscription required before anything else —
+    // applies to the whole app, so the Admin/Student role picker itself
+    // only appears once this gate (and Gate 2 below) has passed.
     if (!subscriptionService.isSubscribed && !isSubscribePath) {
       return '/admin/subscribe';
     }
@@ -42,7 +42,7 @@ final router = GoRouter(
     if (subscriptionService.isSubscribed &&
         user != null &&
         (isSubscribePath || isLoginPath)) {
-      return '/admin/venues';
+      return '/';
     }
 
     return null;

@@ -80,7 +80,7 @@ class SplashScreen extends StatelessWidget {
                         icon: Icons.admin_panel_settings_outlined,
                         label: 'Admin',
                         subtitle: 'Manage venues',
-                        onTap: () => context.go('/admin/login'),
+                        onTap: () => context.go('/admin/venues'),
                       ),
                     ),
                     const SizedBox(width: 16),
