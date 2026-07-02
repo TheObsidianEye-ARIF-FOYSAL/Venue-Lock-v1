@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Gate 1 paywall — shown before the admin can reach login/register.
@@ -10,9 +9,10 @@ class SubscriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Scaffold(
       body: Container(
-        decoration: authGradient,
+        decoration: authGradient(context),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -26,14 +26,11 @@ class SubscriptionScreen extends StatelessWidget {
                       width: 84,
                       height: 84,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [kIndigoLight, Colors.white24],
-                        ),
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(26),
                         boxShadow: [
                           BoxShadow(
-                            color: kIndigoLight.withValues(alpha: 0.4),
+                            color: primary.withValues(alpha: 0.4),
                             blurRadius: 30,
                             offset: const Offset(0, 12),
                           ),
@@ -87,7 +84,11 @@ class SubscriptionScreen extends StatelessWidget {
                       ),
                     ).animate().fadeIn(delay: 400.ms).slideY(
                         begin: 0.1, delay: 400.ms, duration: 400.ms),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
+                    const PricingNotice()
+                        .animate()
+                        .fadeIn(delay: 480.ms),
+                    const SizedBox(height: 24),
                     AuthPrimaryButton(
                       label: 'Subscribe with Mobile',
                       loading: false,
