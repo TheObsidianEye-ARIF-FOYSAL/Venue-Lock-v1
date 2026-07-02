@@ -187,9 +187,12 @@ class ProfileScreen extends StatelessWidget {
                                   .unsubscribe();
                               if (!context.mounted) return;
                               if (unsubOk) {
+                                // BdApps compliance: unsubscribing must
+                                // automatically log the user out and land
+                                // them on the login page — no exceptions.
                                 await context.read<AuthService>().logout();
                                 if (context.mounted) {
-                                  context.go('/admin/subscribe');
+                                  context.go('/admin/login');
                                 }
                               } else {
                                 final err = context
