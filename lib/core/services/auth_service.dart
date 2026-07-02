@@ -60,20 +60,32 @@ class AuthService extends ChangeNotifier {
 
   Future<String?> signInWithGoogle() async {
     try {
-      final provider = GoogleAuthProvider();
-      UserCredential credential;
-
       if (kIsWeb) {
         // Web: show a popup window
-        credential = await _auth.signInWithPopup(provider);
-      } else {
-        // Android / iOS: opens a browser-based consent screen
-        credential = await _auth.signInWithProvider(provider);
+        final credential =
+            await _auth.signInWithPopup(GoogleAuthProvider());
+        if (credential.user == null) return 'Google sign-in failed.';
+        notifyListeners();
+        return null;
       }
 
+      // Android / iOS: use the native Google account picker instead of a
+      // browser-based OAuth screen.
+      await _ensureGoogleSignInInitialized();
+      final account = await _googleSignIn.authenticate();
+      final idToken = account.authentication.idToken;
+      if (idToken == null) return 'Google sign-in failed.';
+
+      final googleCredential = GoogleAuthProvider.credential(idToken: idToken);
+      final credential = await _auth.signInWithCredential(googleCredential);
       if (credential.user == null) return 'Google sign-in failed.';
       notifyListeners();
       return null;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        return 'Sign-in cancelled.';
+      }
+      return 'Google sign-in failed. Please try again.';
     } on FirebaseAuthException catch (e) {
       return _friendlyError(e.code);
     } catch (_) {
@@ -83,6 +95,9 @@ class AuthService extends ChangeNotifier {
 
   Future<void> logout() async {
     await _auth.signOut();
+    if (!kIsWeb) {
+      await _googleSignIn.signOut();
+    }
     notifyListeners();
   }
 
