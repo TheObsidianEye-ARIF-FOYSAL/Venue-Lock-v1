@@ -130,12 +130,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
                                   controller: _tabController,
                                   children: [
                                     _LoginForm(
-                                      onSuccess: () =>
-                                          context.go('/admin/venues'),
+                                      onSuccess: () => context.go('/'),
                                     ),
                                     _RegisterForm(
-                                      onSuccess: () =>
-                                          context.go('/admin/venues'),
+                                      onSuccess: () => context.go('/'),
                                     ),
                                   ],
                                 ),
