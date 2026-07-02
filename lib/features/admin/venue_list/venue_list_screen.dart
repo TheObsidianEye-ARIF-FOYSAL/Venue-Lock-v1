@@ -6,44 +6,17 @@ import '../../../app/theme.dart';
 import '../../../core/models/venue.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/services/auth_service.dart';
-import '../../../core/services/subscription_service.dart';
 
 class VenueListScreen extends StatelessWidget {
   const VenueListScreen({super.key});
-
-  Future<bool> _confirm(
-    BuildContext context, {
-    required String title,
-    required String message,
-    required String confirmLabel,
-    bool destructive = false,
-  }) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            style: destructive
-                ? FilledButton.styleFrom(backgroundColor: kError)
-                : null,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(confirmLabel),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
-  }
 
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final venues = appState.venues;
+    final auth = context.watch<AuthService>();
+    final photoUrl = auth.currentUser?.photoURL;
+    final name = auth.displayName;
 
     return Scaffold(
       appBar: AppBar(
@@ -51,63 +24,25 @@ class VenueListScreen extends StatelessWidget {
         centerTitle: false,
         automaticallyImplyLeading: false,
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) async {
-              if (value == 'logout') {
-                final ok = await _confirm(
-                  context,
-                  title: 'Logout?',
-                  message: 'You will be signed out and redirected to the '
-                      'login screen. Your subscription remains active.',
-                  confirmLabel: 'Logout',
-                );
-                if (!ok || !context.mounted) return;
-                await context.read<AuthService>().logout();
-                if (context.mounted) context.go('/admin/login');
-              } else if (value == 'unsubscribe') {
-                final ok = await _confirm(
-                  context,
-                  title: 'Unsubscribe?',
-                  message: 'Your subscription will be cancelled and you '
-                      'will be signed out. You will need to subscribe '
-                      'again to use the admin console.',
-                  confirmLabel: 'Unsubscribe',
-                  destructive: true,
-                );
-                if (!ok || !context.mounted) return;
-                final unsubOk =
-                    await context.read<SubscriptionService>().unsubscribe();
-                if (!context.mounted) return;
-                if (unsubOk) {
-                  await context.read<AuthService>().logout();
-                  if (context.mounted) context.go('/admin/subscribe');
-                } else {
-                  final err = context.read<SubscriptionService>().error;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(err ?? 'Unsubscribe failed')),
-                  );
-                }
-              }
-            },
-            itemBuilder: (ctx) => const [
-              PopupMenuItem(
-                value: 'logout',
-                child: ListTile(
-                  leading: Icon(Icons.logout),
-                  title: Text('Logout'),
-                  contentPadding: EdgeInsets.zero,
-                ),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => context.push('/admin/profile'),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: kIndigo.withValues(alpha: 0.15),
+                backgroundImage:
+                    photoUrl != null ? NetworkImage(photoUrl) : null,
+                child: photoUrl == null
+                    ? Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                            color: kIndigo, fontWeight: FontWeight.bold),
+                      )
+                    : null,
               ),
-              PopupMenuItem(
-                value: 'unsubscribe',
-                child: ListTile(
-                  leading: Icon(Icons.unsubscribe_outlined),
-                  title: Text('Unsubscribe'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
