@@ -362,8 +362,8 @@ class _AvatarHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final light = Color.lerp(primary, Colors.white, 0.25)!;
+    final seed = context.watch<ThemeService>().seedColor;
+    final dark = brandAccent(context);
     return Column(
       children: [
         Container(
@@ -371,10 +371,10 @@ class _AvatarHeader extends StatelessWidget {
           height: 92,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(colors: [light, primary]),
+            gradient: LinearGradient(colors: [seed, dark]),
             boxShadow: [
               BoxShadow(
-                color: light.withValues(alpha: 0.4),
+                color: dark.withValues(alpha: 0.5),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
@@ -473,10 +473,7 @@ class _StatTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.35),
+              color: brandAccent(context).withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: Colors.white, size: 20),

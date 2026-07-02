@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/services/theme_service.dart';
 
-/// Dark-gradient background used across the subscribe/login/profile flow,
-/// derived from the currently selected palette so all 4 themes carry
-/// through consistently in both light and dark mode.
+/// These auth/profile screens are always rendered as a dark "branded"
+/// surface with white text and glass cards, regardless of the app's
+/// light/dark mode setting — deriving the gradient from
+/// `Theme.of(context).colorScheme.primary` (which changes tone between
+/// light/dark ThemeData) previously caused low-contrast white text on some
+/// palettes in light mode. Reading the raw palette seed color instead and
+/// always darkening it here guarantees readable white text in all 4
+/// palettes x both mode combinations.
+Color _brandSeed(BuildContext context) =>
+    context.watch<ThemeService>().seedColor;
+
+/// A safely dark tone of the current palette, for gradient tops / large
+/// flat surfaces where white text must stay readable.
+Color brandDark(BuildContext context) =>
+    Color.lerp(_brandSeed(context), Colors.black, 0.6)!;
+
+/// A moderately dark accent tone — brighter than [brandDark] but still
+/// dark enough for white text/icons on top of it.
+Color brandAccent(BuildContext context) =>
+    Color.lerp(_brandSeed(context), Colors.black, 0.25)!;
+
+/// Dark-gradient background used across the subscribe/login/profile flow.
 BoxDecoration authGradient(BuildContext context) {
-  final primary = Theme.of(context).colorScheme.primary;
-  final deep = Color.lerp(primary, Colors.black, 0.6)!;
   return BoxDecoration(
     gradient: LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [deep, primary],
+      colors: [brandDark(context), brandAccent(context)],
     ),
   );
 }
@@ -126,15 +145,15 @@ class AuthPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final light = Color.lerp(primary, Colors.white, 0.25)!;
+    final seed = _brandSeed(context);
+    final dark = brandAccent(context);
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [light, primary]),
+        gradient: LinearGradient(colors: [seed, dark]),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.4),
+            color: dark.withValues(alpha: 0.5),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -158,7 +177,9 @@ class AuthPrimaryButton extends StatelessWidget {
               )
             : Text(label,
                 style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700)),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
       ),
     );
   }

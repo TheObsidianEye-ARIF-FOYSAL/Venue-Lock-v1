@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/app_state.dart';
+import '../../admin/subscription/widgets/auth_widgets.dart';
 
 class JoinScreen extends StatefulWidget {
   const JoinScreen({super.key});
@@ -52,13 +53,7 @@ class _JoinScreenState extends State<JoinScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1E1B4B), Color(0xFF3730A3)],
-          ),
-        ),
+        decoration: authGradient(context),
         child: SafeArea(
           child: Column(
             children: [
@@ -70,6 +65,26 @@ class _JoinScreenState extends State<JoinScreen> {
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => context.go('/'),
+                    ),
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: const Icon(Icons.lock_outlined,
+                          color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'VenueLock',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),

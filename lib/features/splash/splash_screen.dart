@@ -82,7 +82,7 @@ class SplashScreen extends StatelessWidget {
                     Expanded(
                       child: _RoleCard(
                         icon: Icons.confirmation_number_outlined,
-                        label: 'Student',
+                        label: 'Audience',
                         subtitle: 'Book your seat',
                         onTap: () => context.go('/student'),
                       ),
