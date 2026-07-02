@@ -57,7 +57,7 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       body: Container(
-        decoration: authGradient,
+        decoration: authGradient(context),
         child: SafeArea(
           child: Column(
             children: [

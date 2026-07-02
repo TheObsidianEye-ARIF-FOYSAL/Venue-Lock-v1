@@ -68,7 +68,7 @@ class _OtpScreenState extends State<OtpScreen> {
     final phone = context.watch<SubscriptionService>().phone ?? '';
     return Scaffold(
       body: Container(
-        decoration: authGradient,
+        decoration: authGradient(context),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),

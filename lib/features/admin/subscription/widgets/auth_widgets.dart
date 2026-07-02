@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme.dart';
 
-/// Shared dark-gradient background used across the subscribe/login flow.
-const authGradient = BoxDecoration(
-  gradient: LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF1E1B4B), Color(0xFF3730A3)],
-  ),
-);
+/// Dark-gradient background used across the subscribe/login/profile flow,
+/// derived from the currently selected palette so all 4 themes carry
+/// through consistently in both light and dark mode.
+BoxDecoration authGradient(BuildContext context) {
+  final primary = Theme.of(context).colorScheme.primary;
+  final deep = Color.lerp(primary, Colors.black, 0.6)!;
+  return BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [deep, primary],
+    ),
+  );
+}
 
 class AuthBackButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -67,13 +72,15 @@ class AuthPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final light = Color.lerp(primary, Colors.white, 0.25)!;
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [kIndigoLight, kIndigo]),
+        gradient: LinearGradient(colors: [light, primary]),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: kIndigo.withValues(alpha: 0.4),
+            color: primary.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

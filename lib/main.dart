@@ -7,6 +7,7 @@ import 'app/theme.dart';
 import 'core/services/app_state.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/service_instances.dart';
+import 'core/services/theme_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -19,6 +20,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AppState()),
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider.value(value: subscriptionService),
+        ChangeNotifierProvider(create: (_) => ThemeService()),
       ],
       child: const VenueLockApp(),
     ),
@@ -50,11 +52,13 @@ class _VenueLockAppState extends State<VenueLockApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeService = context.watch<ThemeService>();
     return MaterialApp.router(
       title: 'VenueLock',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(themeService.seedColor),
+      darkTheme: AppTheme.dark(themeService.seedColor),
+      themeMode: themeService.mode,
       routerConfig: router,
     );
   }

@@ -62,7 +62,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: authGradient,
+        decoration: authGradient(context),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
