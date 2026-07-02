@@ -1,7 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import '../core/services/service_instances.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/admin/auth/admin_login_screen.dart';
+import '../features/admin/subscription/subscription_screen.dart';
+import '../features/admin/subscription/phone_screen.dart';
+import '../features/admin/subscription/otp_screen.dart';
 import '../features/admin/venue_list/venue_list_screen.dart';
 import '../features/admin/create_venue/create_venue_screen.dart';
 import '../features/admin/venue_detail/venue_detail_screen.dart';
@@ -14,21 +18,44 @@ import '../features/student/entry_pass/entry_pass_screen.dart';
 final router = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
-    final user = FirebaseAuth.instance.currentUser;
     final path = state.uri.path;
+    if (!path.startsWith('/admin')) return null;
 
-    // Protect all admin routes except the login page
-    final isAdminProtected =
-        path.startsWith('/admin') && path != '/admin/login';
-    if (isAdminProtected && user == null) return '/admin/login';
+    final isSubscribePath = path.startsWith('/admin/subscribe');
+    final isLoginPath = path == '/admin/login';
 
-    // If already logged in and visiting the login page, go straight to venues
-    if (path == '/admin/login' && user != null) return '/admin/venues';
+    // Gate 1: BdApps-style subscription required before anything else.
+    if (!subscriptionService.isSubscribed && !isSubscribePath) {
+      return '/admin/subscribe';
+    }
+
+    // Gate 2: Firebase login required once subscribed.
+    final user = FirebaseAuth.instance.currentUser;
+    if (subscriptionService.isSubscribed &&
+        user == null &&
+        !isLoginPath &&
+        !isSubscribePath) {
+      return '/admin/login';
+    }
+
+    // Fully gated through — bounce away from subscribe/login screens.
+    if (subscriptionService.isSubscribed &&
+        user != null &&
+        (isSubscribePath || isLoginPath)) {
+      return '/admin/venues';
+    }
 
     return null;
   },
   routes: [
     GoRoute(path: '/', builder: (ctx, _) => const SplashScreen()),
+    GoRoute(
+        path: '/admin/subscribe',
+        builder: (ctx, _) => const SubscriptionScreen()),
+    GoRoute(
+        path: '/admin/subscribe/phone', builder: (ctx, _) => const PhoneScreen()),
+    GoRoute(
+        path: '/admin/subscribe/otp', builder: (ctx, _) => const OtpScreen()),
     GoRoute(
         path: '/admin/login',
         builder: (ctx, _) => const AdminLoginScreen()),
