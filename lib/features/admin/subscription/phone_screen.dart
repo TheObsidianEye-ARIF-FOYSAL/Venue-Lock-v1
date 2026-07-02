@@ -23,11 +23,13 @@ class _PhoneScreenState extends State<PhoneScreen> {
   }
 
   String? _validate(String? v) {
-    final d = (v ?? '').replaceAll(RegExp(r'[^0-9]'), '');
-    if (d.length < 11) return 'Enter 11-digit number';
-    final prefix = d.substring(0, 3);
-    if (prefix != '018' && prefix != '016') {
-      return 'Robi (018) or Airtel (016) only';
+    if (v == null || v.trim().isEmpty) return 'Enter your phone';
+    final d = v.replaceAll(RegExp(r'[^0-9]'), '');
+    final normalized = d.startsWith('880') && d.length > 10
+        ? d.substring(3)
+        : (d.startsWith('88') && d.length > 11 ? d.substring(2) : d);
+    if (normalized.length != 11) {
+      return 'Enter a valid 11-digit phone number';
     }
     return null;
   }
