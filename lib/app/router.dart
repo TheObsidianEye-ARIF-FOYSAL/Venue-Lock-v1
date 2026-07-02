@@ -25,24 +25,22 @@ final router = GoRouter(
     final user = FirebaseAuth.instance.currentUser;
     final subscribed = subscriptionService.isSubscribed;
 
-    // Gate A: Firebase login required for everything except the login
-    // screen itself. This must come first (not after subscription) so that
-    // Logout and Unsubscribe can always land the user cleanly back on the
-    // login page, with no bounce through the paywall — a BdApps compliance
-    // requirement ("no exceptions").
-    if (user == null && !isLoginPath) {
-      return '/admin/login';
-    }
-    if (user != null && isLoginPath) {
-      return subscribed ? '/' : '/admin/subscribe';
-    }
-
-    // Gate B: BdApps subscription required for everything except the
-    // subscribe flow itself, once logged in.
-    if (user != null && !subscribed && !isSubscribePath) {
+    // Gate 1: BdApps-style subscription (Subscribe → Phone → OTP) required
+    // before anything else, including the Firebase login screen — applies
+    // to the whole app, so the Admin/Student role picker only appears once
+    // both this gate and Gate 2 below have passed.
+    if (!subscribed && !isSubscribePath) {
       return '/admin/subscribe';
     }
-    if (user != null && subscribed && isSubscribePath) {
+    if (subscribed && isSubscribePath) {
+      return user == null ? '/admin/login' : '/';
+    }
+
+    // Gate 2: Firebase login required once subscribed.
+    if (subscribed && user == null && !isLoginPath) {
+      return '/admin/login';
+    }
+    if (subscribed && user != null && isLoginPath) {
       return '/';
     }
 
