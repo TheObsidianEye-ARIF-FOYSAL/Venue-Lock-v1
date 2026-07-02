@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/auth_service.dart';
+import '../subscription/widgets/auth_widgets.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -34,13 +35,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1E1B4B), Color(0xFF3730A3)],
-          ),
-        ),
+        decoration: authGradient(context),
         child: SafeArea(
           child: Column(
             children: [
@@ -98,7 +93,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
                             fontSize: 14,
                           ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
+                        const PricingNotice(),
+                        const SizedBox(height: 20),
                         // Card with tabs
                         Card(
                           shape: RoundedRectangleBorder(
@@ -112,9 +109,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
                                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                                 child: TabBar(
                                   controller: _tabController,
-                                  labelColor: kIndigo,
+                                  labelColor:
+                                      Theme.of(context).colorScheme.primary,
                                   unselectedLabelColor: Colors.grey,
-                                  indicatorColor: kIndigo,
+                                  indicatorColor:
+                                      Theme.of(context).colorScheme.primary,
                                   indicatorSize: TabBarIndicatorSize.tab,
                                   dividerColor: Colors.transparent,
                                   tabs: const [
