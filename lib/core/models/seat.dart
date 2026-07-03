@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Seat {
   final String id; // e.g. "GIRLS_R1C1"
   final int row;
@@ -32,37 +30,22 @@ class Seat {
   bool get isAvailable => status == 'available';
   bool get isDisabled => false;
 
-  Map<String, dynamic> toFirestore() => {
-        'row': row,
-        'col': col,
-        'section': section,
-        'status': status,
-        'studentName': studentName,
-        'studentEmail': studentEmail,
-        'rollNumber': rollNumber,
-        'qrToken': qrToken,
-        'checkedIn': checkedIn,
-        'checkedInAt':
-            checkedInAt != null ? Timestamp.fromDate(checkedInAt!) : null,
-        'bookedAt': bookedAt != null ? Timestamp.fromDate(bookedAt!) : null,
-      };
-
-  factory Seat.fromFirestore(String id, Map<String, dynamic> data) => Seat(
-        id: id,
-        row: (data['row'] as num).toInt(),
-        col: (data['col'] as num).toInt(),
-        section: data['section'] as String? ?? '',
-        status: data['status'] as String? ?? 'available',
-        studentName: data['studentName'] as String?,
-        studentEmail: data['studentEmail'] as String?,
-        rollNumber: data['rollNumber'] as String?,
-        qrToken: data['qrToken'] as String?,
-        checkedIn: data['checkedIn'] as bool? ?? false,
-        checkedInAt: data['checkedInAt'] != null
-            ? (data['checkedInAt'] as Timestamp).toDate()
+  factory Seat.fromJson(Map<String, dynamic> json) => Seat(
+        id: json['id'] as String,
+        row: (json['row'] as num).toInt(),
+        col: (json['col'] as num).toInt(),
+        section: json['section'] as String? ?? '',
+        status: json['status'] as String? ?? 'available',
+        studentName: json['studentName'] as String?,
+        studentEmail: json['studentEmail'] as String?,
+        rollNumber: json['rollNumber'] as String?,
+        qrToken: json['qrToken'] as String?,
+        checkedIn: json['checkedIn'] as bool? ?? false,
+        checkedInAt: json['checkedInAt'] != null
+            ? DateTime.parse(json['checkedInAt'] as String)
             : null,
-        bookedAt: data['bookedAt'] != null
-            ? (data['bookedAt'] as Timestamp).toDate()
+        bookedAt: json['bookedAt'] != null
+            ? DateTime.parse(json['bookedAt'] as String)
             : null,
       );
 }

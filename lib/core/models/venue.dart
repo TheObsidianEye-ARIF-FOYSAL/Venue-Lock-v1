@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'venue_section.dart';
 
 class Venue {
@@ -28,28 +27,17 @@ class Venue {
   double get bookingProgress =>
       totalSeats > 0 ? bookedCount / totalSeats : 0.0;
 
-  Map<String, dynamic> toFirestore() => {
-        'name': name,
-        'adminId': adminId,
-        'eventDate': Timestamp.fromDate(eventDate),
-        'sections': sections.map((s) => s.toMap()).toList(),
-        'accessCode': accessCode,
-        'status': status,
-        'bookedCount': bookedCount,
-        'checkedInCount': checkedInCount,
-      };
-
-  factory Venue.fromFirestore(String id, Map<String, dynamic> data) => Venue(
-        id: id,
-        name: data['name'] as String,
-        eventDate: (data['eventDate'] as Timestamp).toDate(),
-        sections: (data['sections'] as List<dynamic>)
+  factory Venue.fromJson(Map<String, dynamic> json) => Venue(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        eventDate: DateTime.parse(json['eventDate'] as String),
+        sections: (json['sections'] as List<dynamic>)
             .map((s) => VenueSection.fromMap(s as Map<String, dynamic>))
             .toList(),
-        accessCode: data['accessCode'] as String,
-        status: data['status'] as String? ?? 'open',
-        bookedCount: (data['bookedCount'] as num?)?.toInt() ?? 0,
-        checkedInCount: (data['checkedInCount'] as num?)?.toInt() ?? 0,
-        adminId: data['adminId'] as String,
+        accessCode: json['accessCode'] as String,
+        status: json['status'] as String? ?? 'open',
+        bookedCount: (json['bookedCount'] as num?)?.toInt() ?? 0,
+        checkedInCount: (json['checkedInCount'] as num?)?.toInt() ?? 0,
+        adminId: json['adminId'] as String,
       );
 }
