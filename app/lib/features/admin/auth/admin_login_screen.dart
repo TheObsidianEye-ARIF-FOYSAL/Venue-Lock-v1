@@ -125,7 +125,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
                               const Divider(height: 1),
                               // Tab content
                               SizedBox(
-                                height: _tabController.index == 0 ? 300 : 460,
+                                height: _tabController.index == 0 ? 340 : 460,
                                 child: TabBarView(
                                   controller: _tabController,
                                   children: [
