@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../core/services/service_instances.dart';
 import '../features/splash/splash_screen.dart';
@@ -22,25 +21,25 @@ final router = GoRouter(
     final path = state.uri.path;
     final isSubscribePath = path.startsWith('/admin/subscribe');
     final isLoginPath = path == '/admin/login';
-    final user = FirebaseAuth.instance.currentUser;
+    final loggedIn = authService.isLoggedIn;
     final subscribed = subscriptionService.isSubscribed;
 
     // Gate 1: BdApps-style subscription (Subscribe → Phone → OTP) required
-    // before anything else, including the Firebase login screen — applies
-    // to the whole app, so the Admin/Student role picker only appears once
-    // both this gate and Gate 2 below have passed.
+    // before anything else, including the login screen — applies to the
+    // whole app, so the Admin/Student role picker only appears once both
+    // this gate and Gate 2 below have passed.
     if (!subscribed && !isSubscribePath) {
       return '/admin/subscribe';
     }
     if (subscribed && isSubscribePath) {
-      return user == null ? '/admin/login' : '/';
+      return !loggedIn ? '/admin/login' : '/';
     }
 
-    // Gate 2: Firebase login required once subscribed.
-    if (subscribed && user == null && !isLoginPath) {
+    // Gate 2: phone+password login required once subscribed.
+    if (subscribed && !loggedIn && !isLoginPath) {
       return '/admin/login';
     }
-    if (subscribed && user != null && isLoginPath) {
+    if (subscribed && loggedIn && isLoginPath) {
       return '/';
     }
 
