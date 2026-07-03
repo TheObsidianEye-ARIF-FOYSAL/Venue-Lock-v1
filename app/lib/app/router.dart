@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../core/services/service_instances.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/admin/auth/admin_login_screen.dart';
+import '../features/admin/auth/forgot_password_screen.dart';
 import '../features/admin/subscription/subscription_screen.dart';
 import '../features/admin/subscription/phone_screen.dart';
 import '../features/admin/subscription/otp_screen.dart';
@@ -21,6 +22,7 @@ final router = GoRouter(
     final path = state.uri.path;
     final isSubscribePath = path.startsWith('/admin/subscribe');
     final isLoginPath = path == '/admin/login';
+    final isForgotPasswordPath = path == '/admin/forgot-password';
     final loggedIn = authService.isLoggedIn;
     final subscribed = subscriptionService.isSubscribed;
 
@@ -35,8 +37,9 @@ final router = GoRouter(
       return !loggedIn ? '/admin/login' : '/';
     }
 
-    // Gate 2: phone+password login required once subscribed.
-    if (subscribed && !loggedIn && !isLoginPath) {
+    // Gate 2: phone+password login required once subscribed — except the
+    // forgot-password flow, which must be reachable while logged out.
+    if (subscribed && !loggedIn && !isLoginPath && !isForgotPasswordPath) {
       return '/admin/login';
     }
     if (subscribed && loggedIn && isLoginPath) {
@@ -57,6 +60,9 @@ final router = GoRouter(
     GoRoute(
         path: '/admin/login',
         builder: (ctx, _) => const AdminLoginScreen()),
+    GoRoute(
+        path: '/admin/forgot-password',
+        builder: (ctx, _) => const ForgotPasswordScreen()),
     GoRoute(
         path: '/admin/venues',
         builder: (ctx, _) => const VenueListScreen()),
