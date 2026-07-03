@@ -15,7 +15,7 @@ class VenueListScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     final venues = appState.venues;
     final auth = context.watch<AuthService>();
-    final photoUrl = auth.currentUser?.photoURL;
+    const photoUrl = null;
     final name = auth.displayName;
 
     return Scaffold(
