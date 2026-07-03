@@ -65,7 +65,7 @@ class _CreateVenueScreenState extends State<CreateVenueScreen> {
   Future<void> _publish() async {
     setState(() => _publishing = true);
     try {
-      final adminId = FirebaseAuth.instance.currentUser!.uid;
+      final adminId = context.read<AuthService>().phone!;
       final venueId = await context.read<AppState>().createVenue(
             name: _nameCtrl.text.trim(),
             eventDate: _eventDate,
