@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/models/venue_section.dart';
 import '../../../core/services/app_state.dart';
+import '../../../core/services/auth_service.dart';
 
 class CreateVenueScreen extends StatefulWidget {
   const CreateVenueScreen({super.key});

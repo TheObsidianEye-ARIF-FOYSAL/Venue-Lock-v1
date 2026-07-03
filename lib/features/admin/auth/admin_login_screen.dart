@@ -125,7 +125,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
                               const Divider(height: 1),
                               // Tab content
                               SizedBox(
-                                height: _tabController.index == 0 ? 340 : 400,
+                                height: _tabController.index == 0 ? 300 : 460,
                                 child: TabBarView(
                                   controller: _tabController,
                                   children: [
@@ -166,14 +166,14 @@ class _LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
   }
@@ -184,7 +184,7 @@ class _LoginFormState extends State<_LoginForm> {
 
     final error = await context
         .read<AuthService>()
-        .login(_emailCtrl.text, _passCtrl.text);
+        .login(_phoneCtrl.text, _passCtrl.text);
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -213,15 +213,16 @@ class _LoginFormState extends State<_LoginForm> {
           children: [
             const SizedBox(height: 8),
             TextFormField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                labelText: 'Email address',
-                prefixIcon: Icon(Icons.email_outlined),
+                labelText: 'Phone number',
+                prefixIcon: Icon(Icons.phone_outlined),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Email is required';
-                if (!v.contains('@')) return 'Enter a valid email';
+                if (v == null || v.trim().isEmpty) {
+                  return 'Phone number is required';
+                }
                 return null;
               },
             ),
@@ -255,8 +256,6 @@ class _LoginFormState extends State<_LoginForm> {
                     )
                   : const Text('Sign In'),
             ),
-            const SizedBox(height: 12),
-            _GoogleSignInButton(onSuccess: widget.onSuccess),
           ],
         ),
       ),
@@ -276,7 +275,8 @@ class _RegisterForm extends StatefulWidget {
 
 class _RegisterFormState extends State<_RegisterForm> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   bool _obscure = true;
@@ -285,7 +285,8 @@ class _RegisterFormState extends State<_RegisterForm> {
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
@@ -297,7 +298,7 @@ class _RegisterFormState extends State<_RegisterForm> {
 
     final error = await context
         .read<AuthService>()
-        .register(_emailCtrl.text, _passCtrl.text);
+        .register(_phoneCtrl.text, _nameCtrl.text, _passCtrl.text);
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -333,15 +334,28 @@ class _RegisterFormState extends State<_RegisterForm> {
           children: [
             const SizedBox(height: 8),
             TextFormField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
+              controller: _nameCtrl,
               decoration: const InputDecoration(
-                labelText: 'Email address',
-                prefixIcon: Icon(Icons.email_outlined),
+                labelText: 'Full name',
+                prefixIcon: Icon(Icons.person_outline),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Email is required';
-                if (!v.contains('@')) return 'Enter a valid email';
+                if (v == null || v.trim().isEmpty) return 'Name is required';
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Phone number',
+                prefixIcon: Icon(Icons.phone_outlined),
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return 'Phone number is required';
+                }
                 return null;
               },
             ),
@@ -398,87 +412,9 @@ class _RegisterFormState extends State<_RegisterForm> {
                     )
                   : const Text('Create Account'),
             ),
-            const SizedBox(height: 12),
-            _GoogleSignInButton(onSuccess: widget.onSuccess),
           ],
         ),
       ),
-    );
-  }
-}
-
-// ─── Shared Google Sign-In button ─────────────────────────────────────────────
-
-class _GoogleSignInButton extends StatefulWidget {
-  final VoidCallback onSuccess;
-  const _GoogleSignInButton({required this.onSuccess});
-
-  @override
-  State<_GoogleSignInButton> createState() => _GoogleSignInButtonState();
-}
-
-class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
-  bool _loading = false;
-
-  Future<void> _signIn() async {
-    setState(() => _loading = true);
-    final error = await context.read<AuthService>().signInWithGoogle();
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    if (error == null) {
-      widget.onSuccess();
-    } else if (!error.contains('cancelled')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: kError,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: _loading ? null : _signIn,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
-      ),
-      child: _loading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'G',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4285F4),
-                  ),
-                ),
-                SizedBox(width: 10),
-                Text(
-                  'Continue with Google',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
     );
   }
 }
