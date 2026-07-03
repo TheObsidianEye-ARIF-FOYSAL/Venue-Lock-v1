@@ -42,72 +42,43 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Future<void> _handleDeleteAccount(BuildContext context) async {
-    final auth = context.read<AuthService>();
-    final isGoogleUser = auth.isGoogleUser;
-    String? password;
-
-    if (isGoogleUser) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Delete Account'),
-          content: const Text(
-            'This will permanently delete your account and cancel your '
-            'subscription. You will be asked to sign in with Google to '
-            'confirm.',
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: kError),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete Account'),
+    final ctrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'This will permanently delete your account, all data, '
+              'and cancel your subscription.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Enter your password to confirm',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
             ),
           ],
         ),
-      );
-      if (confirmed != true || !context.mounted) return;
-    } else {
-      final ctrl = TextEditingController();
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Delete Account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'This will permanently delete your account, all data, '
-                'and cancel your subscription.',
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: ctrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Enter your password to confirm',
-                  prefixIcon: Icon(Icons.lock_outline),
-                ),
-              ),
-            ],
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: kError),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete Account'),
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: kError),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete Account'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !context.mounted) return;
-      password = ctrl.text;
-    }
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final password = ctrl.text;
 
     showDialog(
       context: context,
@@ -162,7 +133,6 @@ class ProfileScreen extends StatelessWidget {
     final auth = context.watch<AuthService>();
     final subscription = context.watch<SubscriptionService>();
     final venues = context.watch<AppState>().venues;
-    final user = auth.currentUser;
 
     final venuesCreated = venues.length;
     final totalCapacity =
@@ -207,9 +177,7 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           _AvatarHeader(
-                            photoUrl: user?.photoURL,
                             name: auth.displayName,
-                            email: auth.adminEmail,
                           ).animate().fadeIn(duration: 400.ms).slideY(
                               begin: 0.1, duration: 400.ms),
                           const SizedBox(height: 24),
@@ -354,11 +322,8 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _AvatarHeader extends StatelessWidget {
-  final String? photoUrl;
   final String name;
-  final String email;
-  const _AvatarHeader(
-      {required this.photoUrl, required this.name, required this.email});
+  const _AvatarHeader({required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -382,20 +347,18 @@ class _AvatarHeader extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(3),
           child: ClipOval(
-            child: photoUrl != null
-                ? Image.network(photoUrl!, fit: BoxFit.cover)
-                : Container(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    alignment: Alignment.center,
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+            child: Container(
+              color: Colors.white.withValues(alpha: 0.12),
+              alignment: Alignment.center,
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -406,11 +369,6 @@ class _AvatarHeader extends StatelessWidget {
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          email,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.65)),
         ),
       ],
     );
