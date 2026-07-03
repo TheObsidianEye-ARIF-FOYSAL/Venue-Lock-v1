@@ -18,10 +18,8 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _pageController = PageController();
-  int _step = 0;
 
   void _goToStep(int step) {
-    setState(() => _step = step);
     _pageController.animateToPage(
       step,
       duration: const Duration(milliseconds: 300),
