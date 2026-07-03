@@ -244,7 +244,14 @@ class _LoginFormState extends State<_LoginForm> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => context.push('/admin/forgot-password'),
+                child: const Text('Forgot password?'),
+              ),
+            ),
+            const SizedBox(height: 8),
             FilledButton(
               onPressed: _loading ? null : _submit,
               child: _loading
