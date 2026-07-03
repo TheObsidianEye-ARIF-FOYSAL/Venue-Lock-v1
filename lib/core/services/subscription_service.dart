@@ -14,7 +14,7 @@ const _kDefaultBaseUrl = String.fromEnvironment(
 
 /// Gate 1 of the two-gate auth flow: a BdApps carrier-billing subscription
 /// (Robi/Airtel direct-carrier-billing, verified via SMS OTP) that must be
-/// active before an admin can even reach the Firebase login screen.
+/// active before an admin can even reach the phone+password login screen.
 class SubscriptionService extends ChangeNotifier {
   static const _prefsKey = 'venuelock_subscribed_phone';
 
