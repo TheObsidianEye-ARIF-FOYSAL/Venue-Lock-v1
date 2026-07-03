@@ -30,6 +30,11 @@ class AuthService extends ChangeNotifier {
   String? _name;
   String? _token;
 
+  // Forgot-password flow state (phone -> OTP -> new password), independent
+  // of the logged-in session above.
+  String? _resetPhone;
+  final Map<String, String> _resetReferenceByPhone = {};
+
   /// Awaited once in main() before runApp() so the router's first redirect
   /// decision already knows the real login state (mirrors SubscriptionService.init).
   late final Future<void> ready;
