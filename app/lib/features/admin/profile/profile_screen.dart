@@ -316,6 +316,13 @@ class ProfileScreen extends StatelessWidget {
                               .fadeIn(delay: 380.ms),
                           const SizedBox(height: 24),
                           _ActionTile(
+                            icon: Icons.password_rounded,
+                            label: 'Change Password',
+                            subtitle: 'Update your account password',
+                            onTap: () => _handleChangePassword(context),
+                          ).animate().fadeIn(delay: 390.ms),
+                          const SizedBox(height: 12),
+                          _ActionTile(
                             icon: Icons.logout_rounded,
                             label: 'Logout',
                             subtitle: 'Sign out — subscription stays active',
