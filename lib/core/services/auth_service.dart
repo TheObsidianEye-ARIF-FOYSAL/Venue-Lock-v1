@@ -1,181 +1,174 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Web OAuth client ID (client_type: 3 in google-services.json) — required
-// on Android so google_sign_in can produce an idToken Firebase can verify.
-const _kGoogleServerClientId =
-    '581574614677-lgh88bfkr367594rshhf1cd67u2aa3k7.apps.googleusercontent.com';
+// Server URL configured at build time:
+//   flutter run --dart-define=SERVER_BASE_URL=https://your-server.com/path
+const _kDefaultBaseUrl = String.fromEnvironment(
+  'SERVER_BASE_URL',
+  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(VL)',
+);
 
+const _kHeaders = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+};
+
+/// Gate 2 of the two-gate auth flow: phone+password admin login, backed by
+/// the PHP+SQLite server in ARIF(VL). No Firebase — the server hashes and
+/// verifies passwords with PHP's password_hash/password_verify, and sessions
+/// are opaque bearer tokens stored alongside the phone number.
 class AuthService extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  Future<void>? _googleSignInInit;
+  static const _prefsPhoneKey = 'venuelock_session_phone';
+  static const _prefsTokenKey = 'venuelock_session_token';
 
-  User? get currentUser => _auth.currentUser;
-  bool get isLoggedIn => _auth.currentUser != null;
-  String get adminEmail => _auth.currentUser?.email ?? '';
-  String get displayName =>
-      _auth.currentUser?.displayName ?? _auth.currentUser?.email ?? '';
-  bool get isGoogleUser => _auth.currentUser?.providerData
-          .any((p) => p.providerId == 'google.com') ??
-      false;
+  final String _baseUrl;
+  String? _phone;
+  String? _name;
+  String? _token;
 
-  AuthService() {
-    _auth.authStateChanges().listen((_) => notifyListeners());
+  /// Awaited once in main() before runApp() so the router's first redirect
+  /// decision already knows the real login state (mirrors SubscriptionService.init).
+  late final Future<void> ready;
+
+  AuthService({String? baseUrl})
+      : _baseUrl = _sanitize(baseUrl ?? _kDefaultBaseUrl) {
+    ready = _restoreSession();
   }
 
-  Future<void> _ensureGoogleSignInInitialized() {
-    return _googleSignInInit ??= _googleSignIn.initialize(
-      serverClientId: _kGoogleServerClientId,
-    );
-  }
+  bool get isLoggedIn => _token != null;
+  String? get phone => _phone;
+  String? get token => _token;
+  String get displayName => _name ?? _phone ?? '';
 
-  Future<String?> register(String email, String password) async {
+  Future<void> _restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final phone = prefs.getString(_prefsPhoneKey);
+    final token = prefs.getString(_prefsTokenKey);
+    if (phone == null || token == null) return;
+
     try {
-      await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/venuelock_profile.php'),
+            headers: _kHeaders,
+            body: jsonEncode({'phone': phone, 'token': token}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) throw Exception('Invalid session');
+
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+      _phone = map['phone'] as String;
+      _name = map['name'] as String?;
+      _token = token;
+      notifyListeners();
+    } catch (_) {
+      await prefs.remove(_prefsPhoneKey);
+      await prefs.remove(_prefsTokenKey);
+    }
+  }
+
+  Future<String?> register(String phone, String name, String password) =>
+      _authRequest('venuelock_register.php', {
+        'phone': phone,
+        'name': name,
+        'password': password,
+      });
+
+  Future<String?> login(String phone, String password) =>
+      _authRequest('venuelock_login.php', {
+        'phone': phone,
+        'password': password,
+      });
+
+  Future<String?> _authRequest(String path, Map<String, String> body) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/$path'),
+            headers: _kHeaders,
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200) {
+        return (map['error'] as String?) ??
+            'Something went wrong. Please try again.';
+      }
+
+      await _persistSession(
+        phone: map['phone'] as String,
+        name: map['name'] as String?,
+        token: map['token'] as String,
       );
       notifyListeners();
       return null;
-    } on FirebaseAuthException catch (e) {
-      return _friendlyError(e.code);
     } catch (_) {
-      return 'An unexpected error occurred.';
+      return 'Network error. Please check your connection and try again.';
     }
   }
 
-  Future<String?> login(String email, String password) async {
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
-      notifyListeners();
-      return null;
-    } on FirebaseAuthException catch (e) {
-      return _friendlyError(e.code);
-    } catch (_) {
-      return 'An unexpected error occurred.';
-    }
-  }
-
-  Future<String?> signInWithGoogle() async {
-    try {
-      if (kIsWeb) {
-        // Web: show a popup window
-        final credential =
-            await _auth.signInWithPopup(GoogleAuthProvider());
-        if (credential.user == null) return 'Google sign-in failed.';
-        notifyListeners();
-        return null;
-      }
-
-      // Android / iOS: use the native Google account picker instead of a
-      // browser-based OAuth screen.
-      await _ensureGoogleSignInInitialized();
-      final account = await _googleSignIn.authenticate();
-      final idToken = account.authentication.idToken;
-      if (idToken == null) return 'Google sign-in failed.';
-
-      final googleCredential = GoogleAuthProvider.credential(idToken: idToken);
-      final credential = await _auth.signInWithCredential(googleCredential);
-      if (credential.user == null) return 'Google sign-in failed.';
-      notifyListeners();
-      return null;
-    } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
-        return 'Sign-in cancelled.';
-      }
-      return 'Google sign-in failed. Please try again.';
-    } on FirebaseAuthException catch (e) {
-      return _friendlyError(e.code);
-    } catch (_) {
-      return 'Google sign-in failed. Please try again.';
-    }
+  Future<void> _persistSession({
+    required String phone,
+    String? name,
+    required String token,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsPhoneKey, phone);
+    await prefs.setString(_prefsTokenKey, token);
+    _phone = phone;
+    _name = name;
+    _token = token;
   }
 
   Future<void> logout() async {
-    await _auth.signOut();
-    if (!kIsWeb) {
-      await _googleSignIn.signOut();
-    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsPhoneKey);
+    await prefs.remove(_prefsTokenKey);
+    _phone = null;
+    _name = null;
+    _token = null;
     notifyListeners();
   }
 
-  /// Deletes the signed-in user's Firebase account. Firebase requires a
-  /// "recent login" for this sensitive operation, so the caller must
-  /// re-authenticate first: pass [password] for email/password accounts,
-  /// or nothing for Google accounts (re-authenticated via Google instead).
-  /// Returns a user-facing error message, or null on success.
+  /// Deletes the signed-in user's account server-side. Requires the current
+  /// password to confirm, mirroring the sensitive-operation guard Firebase
+  /// used to enforce via reauthentication.
   Future<String?> deleteAccount({String? password}) async {
-    final user = _auth.currentUser;
-    if (user == null) return 'No account is signed in.';
+    if (_phone == null || _token == null) return 'No account is signed in.';
+    if (password == null || password.isEmpty) {
+      return 'Password required to confirm deletion.';
+    }
     try {
-      if (isGoogleUser) {
-        await _reauthenticateWithGoogle(user);
-      } else {
-        if (password == null || password.isEmpty) {
-          return 'Password required to confirm deletion.';
-        }
-        await _reauthenticateWithPassword(user, password);
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/venuelock_delete_account.php'),
+            headers: _kHeaders,
+            body: jsonEncode({
+              'phone': _phone,
+              'token': _token,
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200) {
+        return (map['error'] as String?) ?? 'Account deletion failed.';
       }
-      await user.delete();
-      if (!kIsWeb) {
-        await _googleSignIn.signOut();
-      }
-      notifyListeners();
+      await logout();
       return null;
-    } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
-        return 'Sign-in cancelled.';
-      }
-      return 'Google sign-in failed. Please try again.';
-    } on FirebaseAuthException catch (e) {
-      return _friendlyError(e.code);
     } catch (_) {
-      return 'Account deletion failed. Please try again.';
+      return 'Network error. Please try again.';
     }
   }
 
-  Future<void> _reauthenticateWithPassword(User user, String password) async {
-    final credential =
-        EmailAuthProvider.credential(email: user.email!, password: password);
-    await user.reauthenticateWithCredential(credential);
-  }
-
-  Future<void> _reauthenticateWithGoogle(User user) async {
-    await _ensureGoogleSignInInitialized();
-    final account = await _googleSignIn.authenticate();
-    final idToken = account.authentication.idToken;
-    if (idToken == null) throw Exception('Google sign-in failed.');
-    final credential = GoogleAuthProvider.credential(idToken: idToken);
-    await user.reauthenticateWithCredential(credential);
-  }
-
-  static String _friendlyError(String code) {
-    switch (code) {
-      case 'email-already-in-use':
-        return 'This email is already registered. Please sign in instead.';
-      case 'invalid-email':
-        return 'The email address is not valid.';
-      case 'weak-password':
-        return 'Password must be at least 6 characters.';
-      case 'user-not-found':
-        return 'No account found with this email. Please register first.';
-      case 'wrong-password':
-        return 'Incorrect password. Please try again.';
-      case 'invalid-credential':
-        return 'Incorrect email or password. Please try again.';
-      case 'too-many-requests':
-        return 'Too many failed attempts. Please try again later.';
-      case 'user-disabled':
-        return 'This account has been disabled.';
-      case 'popup-closed-by-user':
-        return 'Sign-in popup was closed. Please try again.';
-      default:
-        return 'Authentication failed. Please try again.';
-    }
+  static String _sanitize(String raw) {
+    final t = raw.trim();
+    return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
   }
 }
