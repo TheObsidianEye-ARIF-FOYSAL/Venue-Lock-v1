@@ -172,6 +172,148 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Changes the signed-in user's password, verifying the current one first.
+  Future<String?> changePassword(
+      String currentPassword, String newPassword) async {
+    if (_phone == null || _token == null) return 'No account is signed in.';
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/venuelock_change_password.php'),
+            headers: _kHeaders,
+            body: jsonEncode({
+              'phone': _phone,
+              'token': _token,
+              'currentPassword': currentPassword,
+              'newPassword': newPassword,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200) {
+        return (map['error'] as String?) ?? 'Failed to change password.';
+      }
+      return null;
+    } catch (_) {
+      return 'Network error. Please try again.';
+    }
+  }
+
+  // ── Forgot password (phone -> BDApps OTP -> new password) ─────────────────
+  //
+  // This server has no email/SMS channel of its own to send a reset
+  // code/link through, so it reuses the same BDApps carrier OTP
+  // (send_otp.php/verify_otp.php) already used for the subscription gate,
+  // then trusts the client the same way registration does.
+
+  Future<bool> sendPasswordResetOtp(String phone) async {
+    final normalized = _normalizePhone(phone);
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/send_otp.php'),
+            headers: const {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json',
+            },
+            body: {'user_mobile': normalized},
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) return false;
+
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+      final ref =
+          (map['referenceNo'] ?? map['reference_no'] ?? '').toString().trim();
+      if (ref.isEmpty) return false;
+
+      _resetReferenceByPhone[normalized] = ref;
+      _resetPhone = normalized;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> verifyPasswordResetOtp(String code) async {
+    final phone = _resetPhone;
+    if (phone == null) return false;
+    final ref = _resetReferenceByPhone[phone];
+    if (ref == null) return false;
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/verify_otp.php'),
+            headers: const {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json',
+            },
+            body: {'Otp': code, 'referenceNo': ref},
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) return false;
+
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+      final status = (map['subscriptionStatus'] ?? map['subscription_status'] ?? '')
+          .toString()
+          .toUpperCase()
+          .replaceAll('_', ' ')
+          .trim();
+      const accepted = {
+        'REGISTERED', 'SUBSCRIBED', 'ACTIVE', 'S1000',
+        'INITIAL CHARGING PENDING', 'PENDING INITIAL CHARGING'
+      };
+      final ok = accepted.contains(status) ||
+          (map['statusCode']?.toString().toUpperCase() == 'S1000');
+
+      if (ok) _resetReferenceByPhone.remove(phone);
+      return ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Completes the reset once the OTP above has been verified, and signs the
+  /// user in with the new password.
+  Future<String?> resetPassword(String newPassword) async {
+    final phone = _resetPhone;
+    if (phone == null) return 'Please verify your phone number again.';
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/venuelock_reset_password.php'),
+            headers: _kHeaders,
+            body: jsonEncode({'phone': phone, 'password': newPassword}),
+          )
+          .timeout(const Duration(seconds: 30));
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200) {
+        return (map['error'] as String?) ?? 'Failed to reset password.';
+      }
+
+      await _persistSession(
+        phone: map['phone'] as String,
+        name: map['name'] as String?,
+        token: map['token'] as String,
+      );
+      _resetPhone = null;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      return 'Network error. Please try again.';
+    }
+  }
+
+  static String _normalizePhone(String phone) {
+    final d = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (d.startsWith('880') && d.length > 10) return d.substring(3);
+    if (d.startsWith('88') && d.length > 11) return d.substring(2);
+    return d;
+  }
+
   static String _sanitize(String raw) {
     final t = raw.trim();
     return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
