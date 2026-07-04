@@ -226,6 +226,9 @@ class _SeatMapScreenState extends State<SeatMapScreen> {
                         ),
                         const SizedBox(width: 12),
                         FilledButton(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(140, 48),
+                          ),
                           onPressed: () => context.push(
                               '/student/book/${widget.venueId}/$_selectedSeatId'),
                           child: const Text('Confirm Seat'),
