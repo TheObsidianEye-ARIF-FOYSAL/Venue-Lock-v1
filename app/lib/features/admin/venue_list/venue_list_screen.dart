@@ -20,9 +20,26 @@ class VenueListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('VenueLock'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.go('/'),
+        ),
+        title: Text(
+          name.isNotEmpty ? 'Hi, ${name.split(' ').first}' : 'VenueLock',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
         centerTitle: false,
-        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [kIndigo, kIndigo.withValues(alpha: 0.75)],
+            ),
+          ),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -31,14 +48,14 @@ class VenueListScreen extends StatelessWidget {
               onTap: () => context.push('/admin/profile'),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: kIndigo.withValues(alpha: 0.15),
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
                 backgroundImage:
                     photoUrl != null ? NetworkImage(photoUrl) : null,
                 child: photoUrl == null
                     ? Text(
                         name.isNotEmpty ? name[0].toUpperCase() : '?',
                         style: const TextStyle(
-                            color: kIndigo, fontWeight: FontWeight.bold),
+                            color: Colors.white, fontWeight: FontWeight.bold),
                       )
                     : null,
               ),
