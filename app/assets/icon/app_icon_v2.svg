@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="0.55" stop-color="#3730A3"/>
+      <stop offset="1" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FBBF24"/>
+      <stop offset="0.45" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ticket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E7E5FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- soft corner light for depth -->
+  <circle cx="180" cy="150" r="520" fill="#6366F1" opacity="0.28"/>
+
+  <!-- amber glow shining through the keyhole -->
+  <circle cx="512" cy="530" r="330" fill="url(#glow)" opacity="0.95"/>
+
+  <!-- ticket with side notches and keyhole punched out (even-odd) -->
+  <g transform="rotate(-7 512 512)">
+    <path fill="url(#ticket)" fill-rule="evenodd" d="
+      M 288 302
+      h 448
+      a 52 52 0 0 1 52 52
+      v 92
+      a 66 66 0 0 0 0 132
+      v 92
+      a 52 52 0 0 1 -52 52
+      h -448
+      a 52 52 0 0 1 -52 -52
+      v -92
+      a 66 66 0 0 0 0 -132
+      v -92
+      a 52 52 0 0 1 52 -52
+      Z
+      M 512 388
+      a 78 78 0 0 0 -34 148
+      l -22 96
+      a 14 14 0 0 0 14 17
+      h 84
+      a 14 14 0 0 0 14 -17
+      l -22 -96
+      a 78 78 0 0 0 -34 -148
+      Z"/>
+    <!-- perforation dashes along ticket stub line -->
+    <line x1="512" y1="0" x2="512" y2="0" stroke="none"/>
+  </g>
+</svg>
