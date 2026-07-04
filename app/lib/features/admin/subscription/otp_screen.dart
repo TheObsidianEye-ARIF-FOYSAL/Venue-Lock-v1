@@ -216,6 +216,7 @@ class _OtpBox extends StatelessWidget {
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         decoration: const InputDecoration(
           counterText: '',
+          filled: false,
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
           enabledBorder: InputBorder.none,
