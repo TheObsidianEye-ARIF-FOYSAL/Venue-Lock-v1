@@ -172,20 +172,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       ],
                     ),
                   ),
-                  // Scan window decoration
+                  // Camera scan window
                   Container(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16),
-                    height: 80,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 220,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest
-                          .withValues(alpha: 0.5),
+                      color: Colors.black,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Stack(
                       children: [
+                        QrScanView(onDetect: _onQrDetected),
                         Positioned(
                             top: 8,
                             left: 8,
@@ -206,15 +204,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
                             right: 8,
                             child: _CornerBracket(
                                 top: false, left: false)),
-                        const Center(
-                          child: Text('Simulated Scanner — tap a student below',
-                              style: TextStyle(
-                                  color: Colors.grey, fontSize: 12)),
-                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Point the camera at an entry pass QR code',
+                        style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ),
                   Expanded(
                     child: bookedSeats.isEmpty
                         ? Center(
