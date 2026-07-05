@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/models/seat.dart';
@@ -35,10 +34,11 @@ class _SeatReserveScreenState extends State<SeatReserveScreen> {
       return;
     }
 
+    final appState = context.read<AppState>();
     final guestName = await _promptGuestName();
     if (guestName == null) return;
     setState(() => _busy = true);
-    final ok = await context.read<AppState>().reserveSeat(
+    final ok = await appState.reserveSeat(
           venueId: widget.venueId,
           seatId: seat.id,
           reserve: true,
