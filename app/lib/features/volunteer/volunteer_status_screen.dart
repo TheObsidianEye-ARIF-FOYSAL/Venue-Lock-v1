@@ -85,7 +85,9 @@ class _VolunteerStatusScreenState extends State<VolunteerStatusScreen> {
         child: SafeArea(
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.symmetric(
+                  horizontal: Responsive.horizontalPadding(context),
+                  vertical: 24),
               child: _loading
                   ? const CircularProgressIndicator(color: Colors.white)
                   : _notFound

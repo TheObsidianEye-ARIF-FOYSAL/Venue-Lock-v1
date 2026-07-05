@@ -3,6 +3,30 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-05 session (part 5)
+
+### 13. Confirmed admin has no profile of its own (already done in part 4)
+- Re-verified: no remaining references to `/admin/profile` or a
+  `ProfileScreen` anywhere in the app. The only profile screen is
+  `StudentProfileScreen` at `/student/profile`, reachable solely from the
+  profile icon on the VenueLock role-picker.
+
+### 14. MediaQuery-driven responsive layout
+- Added `app/lib/app/responsive.dart`: `Responsive.horizontalPadding()`
+  (grows with screen width instead of a fixed 16-24px everywhere),
+  `Responsive.maxContentWidth`, and `ResponsiveScaffoldBody` (centers content,
+  caps its width, applies the responsive horizontal padding) — a single
+  source of truth for breakpoints instead of each screen inventing its own
+  `width > 600 ? ... : 24` check.
+- Applied it to: `CreateVenueScreen` (steps 1 & 3), `BookingScreen`,
+  `EntryPassScreen`, `VenueDetailScreen`'s list, `VenueListScreen`'s list,
+  `JoinScreen`, `VolunteerJoinScreen`, and `VolunteerStatusScreen` (which
+  also got a `maxWidth: 420` cap on its status card so the message text
+  doesn't stretch into unreadably long lines on a tablet).
+- Seat grids (`SeatMapScreen`, `SeatReserveScreen`) already computed cell
+  size from `MediaQuery.sizeOf(context).width`, so no change was needed
+  there.
+
 ## 2026-07-05 session (part 4)
 
 ### 11. Unified profile — admin no longer has its own profile screen
