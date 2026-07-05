@@ -1,8 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme.dart';
-import '../../core/services/service_instances.dart';
 import '../admin/subscription/widgets/auth_widgets.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -25,9 +23,7 @@ class SplashScreen extends StatelessWidget {
                     icon: const Icon(Icons.person_outline,
                         color: Colors.white),
                     tooltip: 'My Profile',
-                    onPressed: () => context.push(authService.isLoggedIn
-                        ? '/admin/profile'
-                        : '/student/profile'),
+                    onPressed: () => context.push('/student/profile'),
                   ),
                 ),
                 const Spacer(flex: 2),
@@ -79,41 +75,39 @@ class SplashScreen extends StatelessWidget {
                         letterSpacing: 1.2,
                       ),
                 ).animate().fadeIn(delay: 600.ms),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _RoleCard(
-                        icon: Icons.admin_panel_settings_outlined,
-                        label: 'Admin',
-                        subtitle: 'Manage venues',
-                        onTap: () => context.go('/admin/venues'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _RoleCard(
-                        icon: Icons.confirmation_number_outlined,
-                        label: 'Audience',
-                        subtitle: 'Book your seat',
-                        onTap: () => context.go('/student'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _RoleCard(
-                        icon: Icons.volunteer_activism_outlined,
-                        label: 'Volunteer',
-                        subtitle: 'Help scan entries',
-                        onTap: () => context.go('/volunteer'),
-                      ),
-                    ),
-                  ],
-                ).animate().fadeIn(delay: 700.ms, duration: 500.ms).slideY(
-                      begin: 0.2,
-                      delay: 700.ms,
-                      duration: 500.ms,
-                    ),
+                const SizedBox(height: 18),
+                _RoleTile(
+                  icon: Icons.admin_panel_settings_rounded,
+                  label: 'Admin',
+                  subtitle: 'Create and manage venues',
+                  colors: const [Color(0xFF6366F1), Color(0xFF4338CA)],
+                  onTap: () => context.go('/admin/venues'),
+                )
+                    .animate()
+                    .fadeIn(delay: 650.ms, duration: 450.ms)
+                    .slideX(begin: -0.15, delay: 650.ms, duration: 450.ms),
+                const SizedBox(height: 14),
+                _RoleTile(
+                  icon: Icons.confirmation_number_rounded,
+                  label: 'Audience',
+                  subtitle: 'Book your seat with a code',
+                  colors: const [Color(0xFFF59E0B), Color(0xFFD97706)],
+                  onTap: () => context.go('/student'),
+                )
+                    .animate()
+                    .fadeIn(delay: 780.ms, duration: 450.ms)
+                    .slideX(begin: -0.15, delay: 780.ms, duration: 450.ms),
+                const SizedBox(height: 14),
+                _RoleTile(
+                  icon: Icons.volunteer_activism_rounded,
+                  label: 'Volunteer',
+                  subtitle: 'Help scan entries at the gate',
+                  colors: const [Color(0xFF10B981), Color(0xFF059669)],
+                  onTap: () => context.go('/volunteer'),
+                )
+                    .animate()
+                    .fadeIn(delay: 910.ms, duration: 450.ms)
+                    .slideX(begin: -0.15, delay: 910.ms, duration: 450.ms),
                 const Spacer(),
               ],
             ),
@@ -124,57 +118,112 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
-class _RoleCard extends StatelessWidget {
+class _RoleTile extends StatefulWidget {
   final IconData icon;
   final String label;
   final String subtitle;
+  final List<Color> colors;
   final VoidCallback onTap;
 
-  const _RoleCard({
+  const _RoleTile({
     required this.icon,
     required this.label,
     required this.subtitle,
+    required this.colors,
     required this.onTap,
   });
 
   @override
+  State<_RoleTile> createState() => _RoleTileState();
+}
+
+class _RoleTileState extends State<_RoleTile> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
+    final accent = widget.colors.first;
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: kIndigo.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.35),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              child: Icon(icon, color: kIndigo, size: 28),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: kIndigo,
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: widget.colors,
                   ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.5),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(widget.icon, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.65),
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.arrow_forward_rounded,
+                    color: Colors.white, size: 16),
+              ),
+            ],
+          ),
         ),
       ),
     );

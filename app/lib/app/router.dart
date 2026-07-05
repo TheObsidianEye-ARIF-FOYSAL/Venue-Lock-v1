@@ -6,7 +6,6 @@ import '../features/admin/auth/forgot_password_screen.dart';
 import '../features/admin/subscription/subscription_screen.dart';
 import '../features/admin/subscription/phone_screen.dart';
 import '../features/admin/subscription/otp_screen.dart';
-import '../features/admin/profile/profile_screen.dart';
 import '../features/admin/venue_list/venue_list_screen.dart';
 import '../features/admin/create_venue/create_venue_screen.dart';
 import '../features/admin/venue_detail/venue_detail_screen.dart';
@@ -72,9 +71,6 @@ final router = GoRouter(
     GoRoute(
         path: '/admin/venues',
         builder: (ctx, _) => const VenueListScreen()),
-    GoRoute(
-        path: '/admin/profile',
-        builder: (ctx, _) => const ProfileScreen()),
     GoRoute(
         path: '/admin/venues/create',
         builder: (ctx, _) => const CreateVenueScreen()),

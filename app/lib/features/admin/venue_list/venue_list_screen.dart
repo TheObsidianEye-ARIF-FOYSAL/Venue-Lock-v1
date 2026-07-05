@@ -43,22 +43,17 @@ class VenueListScreen extends StatelessWidget {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: () => context.push('/admin/profile'),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.white.withValues(alpha: 0.2),
-                backgroundImage:
-                    photoUrl != null ? NetworkImage(photoUrl) : null,
-                child: photoUrl == null
-                    ? Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : '?',
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                      )
-                    : null,
-              ),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+              child: photoUrl == null
+                  ? Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    )
+                  : null,
             ),
           ),
         ],
