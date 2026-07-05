@@ -106,9 +106,7 @@ class _JoinScreenState extends State<JoinScreen> {
               const Spacer(),
               Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: MediaQuery.sizeOf(context).width > 600
-                      ? MediaQuery.sizeOf(context).width * 0.2
-                      : 24,
+                  horizontal: Responsive.horizontalPadding(context),
                 ),
                 child: Card(
                   shape: RoundedRectangleBorder(
@@ -212,9 +210,7 @@ class _JoinScreenState extends State<JoinScreen> {
                 const SizedBox(height: 16),
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.sizeOf(context).width > 600
-                        ? MediaQuery.sizeOf(context).width * 0.2
-                        : 24,
+                    horizontal: Responsive.horizontalPadding(context),
                   ),
                   child: Card(
                     shape: RoundedRectangleBorder(
