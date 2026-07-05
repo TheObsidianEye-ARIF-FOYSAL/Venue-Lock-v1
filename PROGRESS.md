@@ -3,6 +3,50 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-05 session (part 2)
+
+### 5. Venue data leaking from one admin account to the next after logout/login — fixed
+- **Symptom**: User1 creates a venue, logs out; User2 logs in immediately after
+  and sees User1's venues.
+- **Root cause**: `AppState._pollVenues()` (`app/lib/core/services/app_state.dart`)
+  is called on a 4s `Timer.periodic` and unconditionally overwrites `_venues`
+  with whatever response arrives — it never checked whether the session that
+  started the request was still the active one. A slow in-flight request for
+  User1's phone/token could resolve *after* User2 had already logged in and
+  reset state, clobbering User2's fresh (empty) venue list with User1's data.
+  The backend (`ARIF(VL)/venuelock_venue_list.php`) was already correctly
+  scoped by `admin_phone` — this was purely a client-side stale-response race.
+- **Fix**: added a `_syncGeneration` counter, bumped on every `startSync`/
+  `stopSync`. Each `_pollVenues` call captures the generation it was started
+  with and discards its result if the generation has since changed.
+
+### 6. Entry pass disappears after force-closing the app — fixed
+- **Symptom**: after booking a seat and viewing the entry pass, force-closing
+  and reopening the app loses the pass entirely, even though the booking is
+  still valid server-side.
+- **Root cause**: the pass was addressable only via in-memory route params
+  (`/student/pass/:venueId/:seatId`) with zero local persistence — killing the
+  app destroys the nav stack and there's no way back to that URL, and no
+  backend endpoint exists to look bookings up by student email either.
+- **Fix**: added `app/lib/core/services/pass_storage.dart` (SharedPreferences-
+  backed) that saves `{venueId, seatId, venueName, seatLabel}` right after a
+  successful booking (`booking_screen.dart`). `JoinScreen` now reads saved
+  passes on load and shows a "My Entry Passes" list the student can tap back
+  into at any time, even after a fresh app launch.
+
+### 7. Admin seat reservation for guests — added
+- New seat status `blocked` (previously only `available`/`booked` existed).
+- New endpoint `ARIF(VL)/venuelock_seat_reserve.php` (session + venue-
+  ownership checked) toggles a seat between `available` and `blocked`.
+  `venuelock_seat_book.php`'s existing `WHERE status = 'available'` clause
+  already excludes blocked seats from public booking with no changes needed.
+- New admin screen `app/lib/features/admin/venue_detail/seat_reserve_screen.dart`
+  (route `/admin/venue/:id/reserve`, linked from a new button on
+  `VenueDetailScreen`) — tap an available seat to reserve it for a guest
+  (prompts for a name/reason), tap a reserved seat to release it back.
+  Student-facing `seat_map_screen.dart` now treats `blocked` the same as
+  `booked` (greyed out, not tappable).
+
 ## 2026-07-04/05 session
 
 ### 1. OTP screen white-on-white text bug — fixed
