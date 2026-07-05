@@ -66,7 +66,9 @@ class VenueListScreen extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 700),
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: Responsive.horizontalPadding(context),
+                      vertical: 16),
                   itemCount: venues.length,
                   itemBuilder: (ctx, i) => _VenueCard(
                     venue: venues[i],
