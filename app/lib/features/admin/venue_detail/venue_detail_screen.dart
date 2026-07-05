@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../app/responsive.dart';
 import '../../../app/theme.dart';
 import '../../../core/models/seat.dart';
 import '../../../core/services/app_state.dart';
@@ -60,7 +61,9 @@ class VenueDetailScreen extends StatelessWidget {
               seats.where((s) => s.status == 'booked').toList();
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.symmetric(
+                horizontal: Responsive.horizontalPadding(context),
+                vertical: 16),
             children: [
               // Status + date
               Row(

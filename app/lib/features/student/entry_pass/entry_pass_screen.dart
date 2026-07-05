@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../app/responsive.dart';
 import '../../../app/theme.dart';
 import '../../../core/models/seat.dart';
 import '../../../core/models/venue.dart';
@@ -110,7 +111,8 @@ class _EntryPassScreenState extends State<EntryPassScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: ResponsiveScaffoldBody(
                 child: Column(
                   children: [
                     // Boarding pass card
@@ -366,6 +368,7 @@ class _EntryPassScreenState extends State<EntryPassScreen> {
                       ],
                     ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
                   ],
+                ),
                 ),
               ),
             ),
