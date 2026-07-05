@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../app/responsive.dart';
 import '../../app/theme.dart';
 import '../../core/services/volunteer_service.dart';
 import '../admin/subscription/widgets/auth_widgets.dart';
@@ -157,7 +158,9 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -184,6 +187,7 @@ class _StatusCard extends StatelessWidget {
             OutlinedButton(onPressed: onCancel, child: Text(cancelLabel)),
           ],
         ),
+      ),
       ),
     );
   }
