@@ -6,6 +6,7 @@ import '../../../app/theme.dart';
 import '../../../core/models/seat.dart';
 import '../../../core/models/venue.dart';
 import '../../../core/services/app_state.dart';
+import '../../../core/services/pass_storage.dart';
 
 class BookingScreen extends StatefulWidget {
   final String venueId;
@@ -77,6 +78,13 @@ class _BookingScreenState extends State<BookingScreen> {
     setState(() => _booking = false);
 
     if (token != null) {
+      await PassStorage.savePass(SavedPass(
+        venueId: widget.venueId,
+        seatId: widget.seatId,
+        venueName: _venue?.name ?? '',
+        seatLabel: _seat?.id ?? widget.seatId,
+      ));
+      if (!mounted) return;
       context.go('/student/pass/${widget.venueId}/${widget.seatId}');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -12,6 +12,7 @@ class AppState extends ChangeNotifier {
   Timer? _venuesTimer;
   String? _phone;
   String? _token;
+  int _syncGeneration = 0;
 
   // Student flow state
   Venue? studentCurrentVenue;
@@ -22,18 +23,23 @@ class AppState extends ChangeNotifier {
 
   void startSync(String phone, String token) {
     _venuesTimer?.cancel();
+    final generation = ++_syncGeneration;
     _phone = phone;
     _token = token;
     _venues = [];
-    _pollVenues();
-    _venuesTimer =
-        Timer.periodic(const Duration(seconds: 4), (_) => _pollVenues());
+    _pollVenues(generation);
+    _venuesTimer = Timer.periodic(
+        const Duration(seconds: 4), (_) => _pollVenues(generation));
   }
 
-  Future<void> _pollVenues() async {
+  Future<void> _pollVenues(int generation) async {
     if (_phone == null || _token == null) return;
     try {
       final list = await _service.getVenues(_phone!, _token!);
+      // Discard results from a session that has since logged out or been
+      // superseded by another login — otherwise a slow response for one
+      // user can land after another user has already signed in.
+      if (generation != _syncGeneration) return;
       _venues = list;
       notifyListeners();
     } catch (_) {
@@ -44,6 +50,7 @@ class AppState extends ChangeNotifier {
   void stopSync() {
     _venuesTimer?.cancel();
     _venuesTimer = null;
+    _syncGeneration++;
     _phone = null;
     _token = null;
     _venues = [];

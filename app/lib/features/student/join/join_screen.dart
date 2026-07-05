@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/app_state.dart';
+import '../../../core/services/pass_storage.dart';
 import '../../admin/subscription/widgets/auth_widgets.dart';
 
 class JoinScreen extends StatefulWidget {
@@ -17,6 +18,19 @@ class _JoinScreenState extends State<JoinScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeCtrl = TextEditingController();
   bool _loading = false;
+  List<SavedPass> _savedPasses = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPasses();
+  }
+
+  Future<void> _loadSavedPasses() async {
+    final passes = await PassStorage.getPasses();
+    if (!mounted) return;
+    setState(() => _savedPasses = passes);
+  }
 
   Future<void> _join() async {
     if (!_formKey.currentState!.validate()) return;
@@ -194,6 +208,58 @@ class _JoinScreenState extends State<JoinScreen> {
                   ),
                 ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1),
               ),
+              if (_savedPasses.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.sizeOf(context).width > 600
+                        ? MediaQuery.sizeOf(context).width * 0.2
+                        : 24,
+                  ),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                            child: Text(
+                              'MY ENTRY PASSES',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
+                                    letterSpacing: 1.2,
+                                  ),
+                            ),
+                          ),
+                          for (final pass in _savedPasses)
+                            ListTile(
+                              leading: const Icon(
+                                  Icons.confirmation_number_outlined,
+                                  color: kIndigo),
+                              title: Text(pass.venueName.isEmpty
+                                  ? 'Seat ${pass.seatLabel}'
+                                  : pass.venueName),
+                              subtitle: Text('Seat ${pass.seatLabel}'),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () => context.push(
+                                  '/student/pass/${pass.venueId}/${pass.seatId}'),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               const Spacer(),
             ],
           ),

@@ -1,0 +1,81 @@
+# VenueLock — Session Progress Log
+
+Running log of work done across Claude Code sessions in this repo. Newest entries on top.
+Read this file first when resuming work here after a restart.
+
+## 2026-07-04/05 session
+
+### 1. OTP screen white-on-white text bug — fixed
+- **Symptom**: on the OTP entry screen, typed digits were invisible.
+- **Root cause**: global `InputDecorationTheme` in `app/lib/app/theme.dart` sets
+  `filled: true` with no `fillColor`, so Material 3 defaults to a light
+  `colorScheme.surfaceContainerHighest` fill. The 6 OTP box `TextField`s didn't
+  override `filled`/`fillColor`, so that light fill painted over the dark glass
+  `Container` background, hiding the white digit text.
+- **Fix**: added `filled: false` to the OTP box `InputDecoration` in both:
+  - `app/lib/features/admin/subscription/otp_screen.dart`
+  - `app/lib/features/admin/auth/forgot_password_screen.dart` (has a duplicate
+    `_OtpBox` widget for the forgot-password flow)
+
+### 2. Admin venues screen — no back button + "boring" flat UI — fixed
+- **Symptom**: tapping "Admin" on the role picker → `VenueListScreen`
+  (`app/lib/features/admin/venue_list/venue_list_screen.dart`) had
+  `automaticallyImplyLeading: false` and no leading action at all, so there was
+  no way back. Also a plain white `AppBar`, inconsistent with the rest of the
+  app's branded gradient look.
+- **Fix**: added a back arrow (`context.go('/')` → role picker), gave the
+  `AppBar` a brand-indigo gradient (`kIndigo` diagonal), white title/icons, and
+  it now greets the admin by first name instead of a generic "VenueLock" label.
+
+### 3. Crash: Audience → enter code → select a seat → app "stops working" — fixed
+- Reproduced live by running the app on the user's connected Android phone
+  (`flutter run -d <device>`) and capturing the real crash from the log —
+  don't guess on crashes if a device is reachable.
+- **Root cause**: global `FilledButtonThemeData` sets
+  `minimumSize: Size.fromHeight(52)` (width = infinity), intended for full-width
+  buttons that stretch inside a `Column`. The "Confirm Seat" button in
+  `app/lib/features/student/seat_map/seat_map_screen.dart` (~line 228) sits
+  directly in a `Row` next to an `Expanded` seat-info column with no width
+  constraint of its own. The moment a seat is selected, that bottom bar
+  appears and Flutter can't resolve an infinite-width button inside a `Row` —
+  throws `BoxConstraints forces an infinite width` every frame.
+- **Fix**: gave that button `style: FilledButton.styleFrom(minimumSize: const
+  Size(140, 48))` to override the inherited infinite-width default.
+- Not yet re-verified end-to-end on-device post-fix (needed a live venue/join
+  code to click all the way through); `flutter analyze` is clean on the file.
+
+### 4. App icon — in progress, awaiting user's verdict
+- Wrote a general, reusable icon-design brief: `app/ICON_PROMPT.md`.
+- Icon v1 (padlock + seat-row shackle, indigo gradient): user didn't like it.
+  Kept at `app/assets/icon/app_icon.svg` — **do not delete**.
+- Icon v2 (ticket stub with a keyhole punched through, amber glow behind, on a
+  richer indigo→near-black gradient): `app/assets/icon/app_icon_v2.svg`.
+  Waiting on user feedback before wiring either into the actual Android/iOS
+  launcher icons (`android/app/src/main/res/mipmap-*`, currently generic
+  `ic_launcher.png`).
+- Both icons were designed by delegating to the `fable` model via the Agent
+  tool (`model: "fable"`) per user's explicit request — user wants icon design
+  work done by Fable 5 specifically, not by the main agent.
+- Preview artifact of both icons side by side (session-scoped, may not survive
+  session end): https://claude.ai/code/artifact/d5f00b83-b4e9-40f0-b3a8-57d773255727
+
+## Environment notes worth remembering
+- `flutter run -d windows` fails here — Developer Mode isn't enabled for
+  symlink support (`Building with plugins requires symlink support`). Use the
+  connected Android device instead: `RMX3241 (wireless)`, device id
+  `adb-P75PHISKJNPRWGLJ-rbgtyQ._adb-tls-connect._tcp` (may change if
+  reconnected — run `flutter devices` to confirm current id).
+- Backend is a PHP REST API at `ARIF(VL)/` (not Firestore, despite some
+  leftover comments in the code referencing Firestore/"FirestoreService" —
+  those are stale naming, the actual client is `VenueService` in
+  `app/lib/core/services/venue_service.dart` hitting
+  `https://ruetandroiddevelopers.com/ARIF(VL)/*.php`).
+
+## Known rough edges not yet addressed
+- `VenueService.getVenues`, `getVenueByCode`, `getVenueById`, and `getSeats`
+  (in `app/lib/core/services/venue_service.dart`) have no try/catch, unlike
+  `bookSeat`/`checkIn` which do. `getSeats` in particular is called directly
+  (no error handling at the call site) from `BookingScreen._loadData` and
+  `EntryPassScreen._load` via `Future.wait` — a network hiccup there would
+  throw an unhandled exception. Not yet confirmed as a real bug the user has
+  hit, but worth hardening to match the pattern used elsewhere in the file.
