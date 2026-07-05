@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../app/responsive.dart';
 import '../../../app/theme.dart';
 import '../../../core/models/seat.dart';
 import '../../../core/models/venue.dart';
@@ -119,7 +120,8 @@ class _BookingScreenState extends State<BookingScreen> {
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: ResponsiveScaffoldBody(
                 child: Form(
                   key: _formKey,
                   child: Column(

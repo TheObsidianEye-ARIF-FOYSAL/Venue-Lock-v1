@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../app/responsive.dart';
 import '../../../app/theme.dart';
 import '../../../core/models/venue_section.dart';
 import '../../../core/services/app_state.dart';
@@ -190,8 +191,9 @@ class _Step1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Form(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: ResponsiveScaffoldBody(
+        child: Form(
         key: formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -237,6 +239,7 @@ class _Step1 extends StatelessWidget {
             FilledButton(onPressed: onNext, child: const Text('Next')),
           ],
         ),
+      ),
       ),
     );
   }
@@ -574,8 +577,9 @@ class _Step3Review extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = sections.fold(0, (acc, sec) => acc + sec.totalSeats);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: ResponsiveScaffoldBody(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text('Review & Publish',
@@ -655,6 +659,7 @@ class _Step3Review extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
