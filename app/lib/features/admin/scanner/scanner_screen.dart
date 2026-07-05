@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/models/seat.dart';
 import '../../../core/services/app_state.dart';
+import '../../shared/qr_scan_view.dart';
 
 class ScannerScreen extends StatefulWidget {
   final String venueId;
@@ -16,6 +17,21 @@ class ScannerScreen extends StatefulWidget {
 
 class _ScannerScreenState extends State<ScannerScreen> {
   bool _showGreenFlash = false;
+
+  void _onQrDetected(String code) {
+    final parts = code.split('::');
+    if (parts.length != 2 || parts[0] != widget.venueId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This QR code is not for this venue'),
+          backgroundColor: kError,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    _checkIn(parts[1]);
+  }
 
   Future<void> _checkIn(String qrToken) async {
     final appState = context.read<AppState>();
