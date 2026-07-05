@@ -234,6 +234,13 @@ class VenueDetailScreen extends StatelessWidget {
                 icon: const Icon(Icons.event_seat_outlined),
                 label: const Text('Reserve Seats for Guests'),
               ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/admin/venue/$venueId/volunteers'),
+                icon: const Icon(Icons.volunteer_activism_outlined),
+                label: const Text('Volunteer Applications'),
+              ),
               const SizedBox(height: 20),
               // Attendees
               Text(
