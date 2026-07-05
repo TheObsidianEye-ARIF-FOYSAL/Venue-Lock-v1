@@ -3,6 +3,58 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-05 session (part 3)
+
+### 8. Local student profile, prefilled/editable booking info — added
+- New `app/lib/core/services/student_profile_service.dart` (SharedPreferences-
+  backed `ChangeNotifier`): stores name/email/roll locally since Audience has
+  no server account. Registered as a provider in `main.dart`.
+- New screen `app/lib/features/student/profile/student_profile_screen.dart`
+  (route `/student/profile`) to view/edit it.
+- A profile icon on `SplashScreen` (the Admin/Audience/Volunteer role picker)
+  opens it — or `/admin/profile` instead if an admin is currently logged in.
+- `BookingScreen` now prefills name/email/roll from the saved profile on
+  load, saves whatever was typed back to the profile on successful booking,
+  and has an "Edit Profile" link next to the form header.
+
+### 9. Real camera QR scanning for admin check-in — added
+- The old `ScannerScreen` had no actual camera scanning; it was a "Simulated
+  Scanner" placeholder where the admin manually tapped a name in a list.
+- Added `mobile_scanner` dependency, camera permission in
+  `android/app/src/main/AndroidManifest.xml` and `NSCameraUsageDescription`
+  in `ios/Runner/Info.plist`.
+- New shared widget `app/lib/features/shared/qr_scan_view.dart` wraps
+  `MobileScanner` with a 2s debounce so a code held in frame doesn't fire
+  repeatedly.
+- `ScannerScreen` now shows a live camera feed; scanning an entry pass QR
+  (format `venueId::qrToken`, matching what `EntryPassScreen` encodes)
+  validates the venueId and calls the existing check-in flow. The manual
+  tap-to-check-in list stays below as a fallback/manual-override path.
+
+### 10. Volunteer role — added
+- New DB table `volunteers` (`ARIF(VL)/venuelock_db.php`): id, venue_id,
+  name, phone, status (pending/approved/rejected), device_token, timestamps.
+- New endpoints: `venuelock_volunteer_apply.php` (apply with a venue's 6-char
+  access code + name/phone, returns a per-device token),
+  `venuelock_volunteer_status.php` (poll approval status),
+  `venuelock_volunteer_list.php` / `venuelock_volunteer_review.php`
+  (admin-session + venue-ownership checked, list/approve/reject),
+  `venuelock_volunteer_checkin.php` (mirrors `venuelock_checkin.php` but
+  authenticates via the volunteer's device token + approved status instead
+  of an admin session, scoped to just that venue).
+- Flutter: `core/services/volunteer_service.dart` (REST client + local
+  persistence of the active application, so a volunteer's pending/approved
+  state survives an app restart — same pattern as item 6's pass storage).
+  New screens under `features/volunteer/`: `volunteer_join_screen.dart`
+  (apply), `volunteer_status_screen.dart` (polls every 4s, auto-routes to
+  the scanner once approved), `volunteer_scanner_screen.dart` (camera scan
+  reusing `QrScanView`). Admin side:
+  `features/admin/venue_detail/volunteer_review_screen.dart` (route
+  `/admin/venue/:id/volunteers`, linked from a new button on
+  `VenueDetailScreen`) to approve/reject applicants.
+- `SplashScreen` role picker now has three cards: Admin / Audience /
+  Volunteer.
+
 ## 2026-07-05 session (part 2)
 
 ### 5. Venue data leaking from one admin account to the next after logout/login — fixed

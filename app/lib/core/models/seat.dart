@@ -3,7 +3,7 @@ class Seat {
   final int row;
   final int col;
   final String section; // section name this seat belongs to
-  String status; // available, booked
+  String status; // available, booked, blocked (admin-reserved for a guest)
   String? studentName;
   String? studentEmail;
   String? rollNumber;
