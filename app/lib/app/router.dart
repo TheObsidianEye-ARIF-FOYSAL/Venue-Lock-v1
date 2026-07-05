@@ -16,6 +16,11 @@ import '../features/student/join/join_screen.dart';
 import '../features/student/seat_map/seat_map_screen.dart';
 import '../features/student/booking/booking_screen.dart';
 import '../features/student/entry_pass/entry_pass_screen.dart';
+import '../features/student/profile/student_profile_screen.dart';
+import '../features/volunteer/volunteer_join_screen.dart';
+import '../features/volunteer/volunteer_status_screen.dart';
+import '../features/volunteer/volunteer_scanner_screen.dart';
+import '../features/admin/venue_detail/volunteer_review_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -107,6 +112,30 @@ final router = GoRouter(
         venueId: state.pathParameters['venueId']!,
         seatId: state.pathParameters['seatId']!,
       ),
+    ),
+    GoRoute(
+        path: '/student/profile',
+        builder: (ctx, _) => const StudentProfileScreen()),
+    GoRoute(
+        path: '/volunteer', builder: (ctx, _) => const VolunteerJoinScreen()),
+    GoRoute(
+      path: '/volunteer/status/:venueId/:volunteerId',
+      builder: (ctx, state) => VolunteerStatusScreen(
+        venueId: state.pathParameters['venueId']!,
+        volunteerId: state.pathParameters['volunteerId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/volunteer/scanner/:venueId/:volunteerId',
+      builder: (ctx, state) => VolunteerScannerScreen(
+        venueId: state.pathParameters['venueId']!,
+        volunteerId: state.pathParameters['volunteerId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/admin/venue/:id/volunteers',
+      builder: (ctx, state) =>
+          VolunteerReviewScreen(venueId: state.pathParameters['id']!),
     ),
   ],
 );

@@ -18,6 +18,15 @@ class SplashScreen extends StatelessWidget {
                 horizontal: MediaQuery.sizeOf(context).width * 0.07),
             child: Column(
               children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.person_outline,
+                        color: Colors.white),
+                    tooltip: 'My Profile',
+                    onPressed: () => context.push('/student/profile'),
+                  ),
+                ),
                 const Spacer(flex: 2),
                 // Logo
                 Container(
@@ -78,13 +87,22 @@ class SplashScreen extends StatelessWidget {
                         onTap: () => context.go('/admin/venues'),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: _RoleCard(
                         icon: Icons.confirmation_number_outlined,
                         label: 'Audience',
                         subtitle: 'Book your seat',
                         onTap: () => context.go('/student'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _RoleCard(
+                        icon: Icons.volunteer_activism_outlined,
+                        label: 'Volunteer',
+                        subtitle: 'Help scan entries',
+                        onTap: () => context.go('/volunteer'),
                       ),
                     ),
                   ],

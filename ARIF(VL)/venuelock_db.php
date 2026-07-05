@@ -47,6 +47,16 @@ function venuelock_db(): PDO {
         booked_at TEXT,
         PRIMARY KEY (id, venue_id)
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS volunteers (
+        id TEXT PRIMARY KEY,
+        venue_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        phone TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        device_token TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        decided_at TEXT
+    )");
     return $pdo;
 }
 
@@ -118,6 +128,17 @@ function venuelock_venue_payload(array $venue): array {
         'bookedCount' => (int) $venue['booked_count'],
         'checkedInCount' => (int) $venue['checked_in_count'],
         'adminId' => $venue['admin_phone'],
+    ];
+}
+
+function venuelock_volunteer_payload(array $v): array {
+    return [
+        'id' => $v['id'],
+        'venueId' => $v['venue_id'],
+        'name' => $v['name'],
+        'phone' => $v['phone'],
+        'status' => $v['status'],
+        'createdAt' => $v['created_at'],
     ];
 }
 
