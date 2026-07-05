@@ -3,6 +3,30 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-05 session (part 4)
+
+### 11. Unified profile — admin no longer has its own profile screen
+- Deleted `features/admin/profile/profile_screen.dart` and the `/admin/profile`
+  route. There is now exactly one profile screen
+  (`features/student/profile/student_profile_screen.dart`, route
+  `/student/profile`), reachable only from the profile icon on the VenueLock
+  role-picker (`SplashScreen`).
+- That screen always shows the local booking-details form (name/email/roll).
+  If an admin happens to be signed in, it *also* shows everything that used
+  to live behind `/admin/profile` — avatar, stats, appearance, change
+  password, logout, unsubscribe, delete account — above a "BOOKING DETAILS"
+  divider.
+- Removed the tappable avatar/profile shortcut from `VenueListScreen`'s app
+  bar (now a plain non-interactive avatar) — admin has to go back to the
+  VenueLock screen to reach profile, same as every other role.
+
+### 12. Role picker redesigned
+- The cramped 3-column "Admin / Audience / Volunteer" row on `SplashScreen`
+  felt flat. Replaced with a vertical stack of full-width `_RoleTile`s: each
+  has its own gradient icon badge and glow color (indigo/amber/emerald),
+  title + subtitle, a trailing arrow chip, a press-scale animation, and a
+  staggered fade+slide-in on entry.
+
 ## 2026-07-05 session (part 3)
 
 ### 8. Local student profile, prefilled/editable booking info — added
