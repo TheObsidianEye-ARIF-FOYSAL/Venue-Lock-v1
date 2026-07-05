@@ -7,6 +7,7 @@ import '../../../core/models/seat.dart';
 import '../../../core/models/venue.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/services/pass_storage.dart';
+import '../../../core/services/student_profile_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String venueId;
@@ -36,6 +37,10 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   void initState() {
     super.initState();
+    final profile = context.read<StudentProfileService>();
+    _nameCtrl.text = profile.name;
+    _emailCtrl.text = profile.email;
+    _rollCtrl.text = profile.roll;
     _loadData();
   }
 
@@ -78,6 +83,12 @@ class _BookingScreenState extends State<BookingScreen> {
     setState(() => _booking = false);
 
     if (token != null) {
+      await context.read<StudentProfileService>().save(
+            name: _nameCtrl.text.trim(),
+            email: _emailCtrl.text.trim(),
+            roll: _rollCtrl.text.trim(),
+          );
+      if (!mounted) return;
       await PassStorage.savePass(SavedPass(
         venueId: widget.venueId,
         seatId: widget.seatId,

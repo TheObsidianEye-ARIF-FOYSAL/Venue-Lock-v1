@@ -4,12 +4,15 @@ import 'app/router.dart';
 import 'app/theme.dart';
 import 'core/services/app_state.dart';
 import 'core/services/service_instances.dart';
+import 'core/services/student_profile_service.dart';
 import 'core/services/theme_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await subscriptionService.init();
   await authService.ready;
+  final studentProfile = StudentProfileService();
+  await studentProfile.load();
   runApp(
     MultiProvider(
       providers: [
@@ -17,6 +20,7 @@ void main() async {
         ChangeNotifierProvider.value(value: authService),
         ChangeNotifierProvider.value(value: subscriptionService),
         ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider.value(value: studentProfile),
       ],
       child: const VenueLockApp(),
     ),
