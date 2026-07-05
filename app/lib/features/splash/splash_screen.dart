@@ -25,7 +25,9 @@ class SplashScreen extends StatelessWidget {
                     icon: const Icon(Icons.person_outline,
                         color: Colors.white),
                     tooltip: 'My Profile',
-                    onPressed: () => context.push('/student/profile'),
+                    onPressed: () => context.push(authService.isLoggedIn
+                        ? '/admin/profile'
+                        : '/student/profile'),
                   ),
                 ),
                 const Spacer(flex: 2),
