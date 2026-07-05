@@ -4,9 +4,11 @@ import '../models/venue.dart';
 import '../models/venue_section.dart';
 import '../models/seat.dart';
 import 'venue_service.dart';
+import 'volunteer_service.dart';
 
 class AppState extends ChangeNotifier {
   final _service = VenueService();
+  final _volunteerService = VolunteerService();
 
   List<Venue> _venues = [];
   Timer? _venuesTimer;
@@ -151,6 +153,29 @@ class AppState extends ChangeNotifier {
       seatId: seatId,
       reserve: reserve,
       guestName: guestName,
+      phone: _phone!,
+      token: _token!,
+    );
+  }
+
+  // ── Volunteer management (admin side) ───────────────────────────────────
+
+  Future<List<VolunteerInfo>> listVolunteers(String venueId) {
+    if (_phone == null || _token == null) throw Exception('Not signed in');
+    return _volunteerService.listForVenue(
+        venueId: venueId, phone: _phone!, token: _token!);
+  }
+
+  Future<bool> reviewVolunteer({
+    required String venueId,
+    required String volunteerId,
+    required bool approve,
+  }) {
+    if (_phone == null || _token == null) throw Exception('Not signed in');
+    return _volunteerService.review(
+      venueId: venueId,
+      volunteerId: volunteerId,
+      approve: approve,
       phone: _phone!,
       token: _token!,
     );
