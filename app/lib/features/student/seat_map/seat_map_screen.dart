@@ -344,7 +344,8 @@ class _SectionGrid extends StatelessWidget {
                   }
 
                   final isSelected = seat.id == selectedSeatId;
-                  final isBooked = seat.status == 'booked';
+                  final isBooked = seat.status == 'booked' ||
+                      seat.status == 'blocked';
 
                   final Color bgColor;
                   final Color textColor;

@@ -10,6 +10,7 @@ import '../features/admin/profile/profile_screen.dart';
 import '../features/admin/venue_list/venue_list_screen.dart';
 import '../features/admin/create_venue/create_venue_screen.dart';
 import '../features/admin/venue_detail/venue_detail_screen.dart';
+import '../features/admin/venue_detail/seat_reserve_screen.dart';
 import '../features/admin/scanner/scanner_screen.dart';
 import '../features/student/join/join_screen.dart';
 import '../features/student/seat_map/seat_map_screen.dart';
@@ -81,6 +82,11 @@ final router = GoRouter(
       path: '/admin/venue/:id/scanner',
       builder: (ctx, state) =>
           ScannerScreen(venueId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/admin/venue/:id/reserve',
+      builder: (ctx, state) =>
+          SeatReserveScreen(venueId: state.pathParameters['id']!),
     ),
     GoRoute(path: '/student', builder: (ctx, _) => const JoinScreen()),
     GoRoute(

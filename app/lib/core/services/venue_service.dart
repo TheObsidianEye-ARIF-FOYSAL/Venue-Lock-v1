@@ -156,6 +156,35 @@ class VenueService {
     }
   }
 
+  Future<bool> reserveSeat({
+    required String venueId,
+    required String seatId,
+    required bool reserve,
+    required String guestName,
+    required String phone,
+    required String token,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/venuelock_seat_reserve.php'),
+            headers: _kHeaders,
+            body: jsonEncode({
+              'phone': phone,
+              'token': token,
+              'venueId': venueId,
+              'seatId': seatId,
+              'reserve': reserve,
+              'guestName': guestName,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static String _sanitize(String raw) {
     final t = raw.trim();
     return t.endsWith('/') ? t.substring(0, t.length - 1) : t;

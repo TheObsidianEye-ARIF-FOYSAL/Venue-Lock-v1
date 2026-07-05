@@ -139,6 +139,23 @@ class AppState extends ChangeNotifier {
         rollNumber: rollNumber,
       );
 
+  Future<bool> reserveSeat({
+    required String venueId,
+    required String seatId,
+    required bool reserve,
+    String guestName = '',
+  }) {
+    if (_phone == null || _token == null) throw Exception('Not signed in');
+    return _service.reserveSeat(
+      venueId: venueId,
+      seatId: seatId,
+      reserve: reserve,
+      guestName: guestName,
+      phone: _phone!,
+      token: _token!,
+    );
+  }
+
   Future<String?> checkIn(String venueId, String qrToken) {
     if (_phone == null || _token == null) throw Exception('Not signed in');
     return _service.checkIn(
