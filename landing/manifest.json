@@ -1,11 +1,11 @@
 {
-    "name": "venue_lock_v1",
-    "short_name": "venue_lock_v1",
-    "start_url": ".",
+    "name": "VenueLock",
+    "short_name": "VenueLock",
+    "start_url": "./app/",
     "display": "standalone",
-    "background_color": "#3730A3",
+    "background_color": "#0B0A1E",
     "theme_color": "#3730A3",
-    "description": "A new Flutter project.",
+    "description": "VenueLock — cap attendance at an exact seat count.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

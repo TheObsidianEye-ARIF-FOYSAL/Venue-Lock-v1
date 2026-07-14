@@ -3,6 +3,101 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-14 session
+
+### 17. Remaining bdapps-adjacent extras — LICENSE, store listing copy
+- User is submitting VenueLock to bdapps and asked for the rest of the
+  "extra work" MedRemind already has (GitHub Pages, actions, landing page,
+  docs) — most of that was already done in the 2026-07-13 session (item 16
+  below). Filled the two gaps found by diffing against `med_remind_v2`:
+  - `LICENSE` — added, same attribution-required MIT-style terms as
+    MedRemind's (copied verbatim, same author/copyright line).
+  - `docs/APP_DESCRIPTION.md` — new: bdapps store listing copy (tagline,
+    short/full description, category, keywords, screenshot checklist, links)
+    since MedRemind had no direct equivalent to crib from (its
+    `bdapps_production_request_email.md` is a different document — the
+    email requesting production access, not listing copy). Linked from
+    README.
+- User manual: explicitly deferred by the user ("will be created later") —
+  left a placeholder note in `APP_DESCRIPTION.md` pointing at the pattern to
+  follow (`med_remind_v2/docs/medremind_user_guide.pdf`), not written yet.
+- Not done: `scripts/` (MedRemind has `scripts/gen_icon.ps1`; VenueLock has
+  no equivalent script yet and none was requested) and a `server/` dir
+  (VenueLock's backend is `ARIF(VL)/`, a different name by earlier explicit
+  choice — not renamed).
+
+## 2026-07-13 session
+
+### 16. CI / landing page / docs infrastructure — added (app + backend untouched)
+- User asked to replicate the deployment infrastructure of a sibling project
+  (MedRemind, `med_remind_v2`) — GitHub Actions + a landing page + root docs —
+  while explicitly keeping the app code and the existing `ARIF(VL)/` PHP
+  backend untouched, and giving the landing page its own visual identity
+  rather than copying MedRemind's design.
+- `.github/workflows/deploy-web.yml`: builds `app/` for web
+  (`flutter build web --release --base-href /Venue-Lock-v1/app/`), assembles
+  a `site/` combining `landing/` at the root and the web build under
+  `site/app/`, deploys to GitHub Pages via
+  `configure-pages`/`upload-pages-artifact`/`deploy-pages`. Triggers on push
+  to `main` touching `app/**` or `landing/**`, plus manual dispatch.
+- `.github/workflows/release-apk.yml`: builds a release APK on `v*` tags (or
+  manual dispatch), renames it `VenueLock.apk`, publishes via
+  `softprops/action-gh-release@v2` — floating `apk-latest` release when not
+  triggered by a real tag, giving a stable
+  `.../releases/latest/download/VenueLock.apk` URL.
+- `landing/index.html`: new static landing page, brand-consistent with the
+  app's indigo/amber palette (`app/assets/icon/app_icon_v2.svg`) but a
+  distinct animated live-seat-grid hero concept, not a MedRemind reskin.
+  Reused `app/web/icons/*` and `app/web/favicon.png` as source assets;
+  `landing/manifest.json` points `start_url` at `./app/`.
+- Root docs added: `README.md` (pitch, live demo/APK links, repo layout,
+  local run instructions), `docs/PROJECT_OVERVIEW.md` (architecture/stack/
+  security notes), `API_USAGE.md` (full app-service → `ARIF(VL)/*.php`
+  endpoint map, including which backend files have no current caller).
+- Not yet verified: the actual GitHub Actions runs (Pages deploy, tagged APK
+  release) — need a push to `main` / a pushed tag to confirm end-to-end,
+  can't be exercised locally. Also haven't yet actually run
+  `flutter build web` / `flutter build apk --release` locally to sanity-check
+  the exact commands the workflows use.
+
+## 2026-07-09 session
+
+### 15. App icon — resolved, wired into all platforms (follow-up to item 4)
+- User picked icon v2 (`app/assets/icon/app_icon_v2.svg`, the ticket-stub +
+  keyhole mark) to actually ship.
+- **Rendering pipeline problem**: needed a 1024×1024 PNG master from the SVG
+  since `flutter_launcher_icons` only accepts a raster `image_path`, not SVG.
+  No system cairo lib on this Windows machine, so `cairosvg` / `svglib` +
+  `reportlab` / `rlPyCairo` all failed at import with
+  `OSError: no library called "cairo-2" was found` even after installing
+  `pycairo` (its bundled DLL isn't discoverable by name via `ctypes.util`).
+  **What worked**: wrap the SVG in a minimal HTML file and rasterize with
+  headless Chrome (already installed at
+  `C:\Program Files\Google\Chrome\Application\chrome.exe`):
+  `chrome.exe --headless --disable-gpu --hide-scrollbars --screenshot=<abs-win-path.png> --window-size=1024,1024 file:///<abs-win-path.html>`.
+  Gotchas: `--screenshot` needs an **absolute Windows path** (not a bash
+  relative path / mixed-slash `$(pwd)` string) or it silently screenshots
+  Chrome's own "file not found" error page instead of erroring out loudly;
+  also needs `overflow:hidden` + explicit `width/height:1024px` on
+  `html,body` or the scrollbar chrome gets baked into the image.
+- Added `flutter_launcher_icons: ^0.14.3` to `pubspec.yaml` dev_dependencies,
+  configured under a `flutter_launcher_icons:` block pointing at
+  `assets/icon/app_icon_v2.png` for `android`, `ios`, `web` (with
+  `background_color`/`theme_color: "#3730A3"`), and `windows` (256px). Ran
+  `flutter pub get` then `dart run flutter_launcher_icons` — regenerated all
+  `android/app/src/main/res/mipmap-*/ic_launcher.png`,
+  `ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png` (+ new size variants
+  it added), `web/icons/*.png` + `web/favicon.png` + `web/manifest.json`, and
+  `windows/runner/resources/app_icon.ico`.
+- Icon v1 (`app/assets/icon/app_icon.svg`) is still kept on disk per the
+  earlier "do not delete" note, just not the one wired in.
+- Not yet committed — changes are sitting in the working tree
+  (`git status` shows the modified icon files + `pubspec.yaml`/`.lock`).
+- Also wrote the user a Fable-5-ready text prompt (ticket+keyhole motif,
+  indigo/amber palette, flat vector, 1024×1024) for generating a fresh icon
+  concept if they want to explore further — not saved to a file, just given
+  in-conversation.
+
 ## 2026-07-05 session (part 5)
 
 ### 13. Confirmed admin has no profile of its own (already done in part 4)
@@ -59,8 +154,9 @@ Read this file first when resuming work here after a restart.
   no server account. Registered as a provider in `main.dart`.
 - New screen `app/lib/features/student/profile/student_profile_screen.dart`
   (route `/student/profile`) to view/edit it.
-- A profile icon on `SplashScreen` (the Admin/Audience/Volunteer role picker)
-  opens it — or `/admin/profile` instead if an admin is currently logged in.
+- A profile icon on `SplashScreen` opens it. (Originally also routed admins to
+  a separate `/admin/profile`, but that screen was deleted in part 4 below —
+  everyone now shares this one screen.)
 - `BookingScreen` now prefills name/email/roll from the saved profile on
   load, saves whatever was typed back to the profile on successful booking,
   and has an "Edit Profile" link next to the form header.
@@ -214,6 +310,31 @@ Read this file first when resuming work here after a restart.
   those are stale naming, the actual client is `VenueService` in
   `app/lib/core/services/venue_service.dart` hitting
   `https://ruetandroiddevelopers.com/ARIF(VL)/*.php`).
+
+## Not yet verified live (next session should do this first)
+Everything in parts 2–5 above was built and passed `flutter analyze`, but
+none of it has been exercised on the connected Android device yet. Before
+trusting it, run through:
+- Log in as admin A, create a venue, log out, log in as admin B — confirm B
+  never sees A's venues (item 5).
+- Book a seat, force-close the app, reopen it, tap "My Entry Passes" from
+  the Join screen — confirm the pass still opens (item 6).
+- As admin, open a venue → "Reserve Seats for Guests", reserve a seat, then
+  confirm the Audience seat map shows it as unavailable (item 7).
+- Fill in the profile screen once, then start a booking — confirm the form
+  prefills, and that editing it there updates future bookings (item 8).
+- Actually point the phone camera at a generated entry pass QR in
+  `ScannerScreen` — this is the first real test of `mobile_scanner` in this
+  app; check the camera permission prompt appears and check-in fires
+  (item 9).
+- Full volunteer loop: apply from the Volunteer role card, approve from
+  admin's new "Volunteer Applications" screen, confirm the volunteer's app
+  auto-navigates to its own camera scanner and can check attendees in
+  (item 10).
+- Eyeball the role-picker tiles and a couple of forms (Booking, Create
+  Venue) on both a small phone and a tablet-sized emulator to confirm the
+  new `Responsive` padding/width caps (item 14) actually look intentional,
+  not just "not broken."
 
 ## Known rough edges not yet addressed
 - `VenueService.getVenues`, `getVenueByCode`, `getVenueById`, and `getSeats`
