@@ -72,7 +72,7 @@ class SplashScreen extends StatelessWidget {
                   label: 'Admin',
                   subtitle: 'Create and manage venues',
                   colors: const [Color(0xFF6366F1), Color(0xFF4338CA)],
-                  onTap: () => context.go('/admin/venues'),
+                  onTap: () => context.push('/admin/venues'),
                 )
                     .animate()
                     .fadeIn(delay: 650.ms, duration: 450.ms)
@@ -83,7 +83,7 @@ class SplashScreen extends StatelessWidget {
                   label: 'Audience',
                   subtitle: 'Book your seat with a code',
                   colors: const [Color(0xFFF59E0B), Color(0xFFD97706)],
-                  onTap: () => context.go('/student'),
+                  onTap: () => context.push('/student'),
                 )
                     .animate()
                     .fadeIn(delay: 780.ms, duration: 450.ms)
@@ -94,7 +94,7 @@ class SplashScreen extends StatelessWidget {
                   label: 'Volunteer',
                   subtitle: 'Help scan entries at the gate',
                   colors: const [Color(0xFF10B981), Color(0xFF059669)],
-                  onTap: () => context.go('/volunteer'),
+                  onTap: () => context.push('/volunteer'),
                 )
                     .animate()
                     .fadeIn(delay: 910.ms, duration: 450.ms)
