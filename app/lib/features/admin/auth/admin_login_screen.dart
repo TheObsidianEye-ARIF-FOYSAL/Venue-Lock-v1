@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/subscription_service.dart';
 import '../subscription/widgets/auth_widgets.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -172,6 +173,15 @@ class _LoginFormState extends State<_LoginForm> {
   bool _loading = false;
 
   @override
+  void initState() {
+    super.initState();
+    final subscribedPhone = context.read<SubscriptionService>().phone;
+    if (subscribedPhone != null && subscribedPhone.isNotEmpty) {
+      _phoneCtrl.text = subscribedPhone;
+    }
+  }
+
+  @override
   void dispose() {
     _phoneCtrl.dispose();
     _passCtrl.dispose();
@@ -289,6 +299,15 @@ class _RegisterFormState extends State<_RegisterForm> {
   bool _obscure = true;
   bool _obscureConfirm = true;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final subscribedPhone = context.read<SubscriptionService>().phone;
+    if (subscribedPhone != null && subscribedPhone.isNotEmpty) {
+      _phoneCtrl.text = subscribedPhone;
+    }
+  }
 
   @override
   void dispose() {

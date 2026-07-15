@@ -217,6 +217,8 @@ class _OtpBox extends StatelessWidget {
         decoration: const InputDecoration(
           counterText: '',
           filled: false,
+          isCollapsed: true,
+          contentPadding: EdgeInsets.symmetric(vertical: 16),
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
           enabledBorder: InputBorder.none,
