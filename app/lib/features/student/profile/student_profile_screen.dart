@@ -5,18 +5,23 @@ import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/pass_storage.dart';
 import '../../../core/services/student_profile_service.dart';
 import '../../../core/services/subscription_service.dart';
 import '../../../core/services/theme_service.dart';
+import '../../../core/services/volunteer_service.dart';
 import '../../admin/subscription/widgets/auth_widgets.dart';
 
 /// The single profile screen for the whole app, reachable only from the
 /// VenueLock role-picker (SplashScreen) — there is no separate admin-only
-/// profile entry point. Always shows the local booking-profile
-/// (name/email/roll, used to prefill Audience/Volunteer forms), and — when
-/// an admin is signed in — also shows the admin account section (stats,
-/// appearance, change password, logout, unsubscribe, delete account) that
-/// used to live behind its own /admin/profile route.
+/// profile entry point. Shows sections in a fixed, role-aware order so every
+/// role sees exactly the info that's relevant to them:
+///   1. Avatar header with a role badge (Admin / Volunteer / Audience / Guest)
+///   2. Personal details form (name/email/roll — prefills booking & volunteer
+///      forms on this device)
+///   3. Role-specific status: admin account stats & actions, OR the active
+///      volunteer application, OR saved audience booking passes
+///   4. Appearance (theme) — available to everyone, not just admins
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
 
@@ -31,6 +36,11 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   late final TextEditingController _rollCtrl;
   bool _saving = false;
 
+  VolunteerApplication? _volunteerApp;
+  VolunteerInfo? _volunteerInfo;
+  List<SavedPass> _passes = [];
+  bool _loadingExtras = true;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +48,27 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     _nameCtrl = TextEditingController(text: profile.name);
     _emailCtrl = TextEditingController(text: profile.email);
     _rollCtrl = TextEditingController(text: profile.roll);
+    _loadExtras();
+  }
+
+  Future<void> _loadExtras() async {
+    final service = VolunteerService();
+    final app = await service.getActiveApplication();
+    VolunteerInfo? info;
+    if (app != null) {
+      info = await service.getStatus(
+        volunteerId: app.volunteerId,
+        deviceToken: app.deviceToken,
+      );
+    }
+    final passes = await PassStorage.getPasses();
+    if (!mounted) return;
+    setState(() {
+      _volunteerApp = app;
+      _volunteerInfo = info;
+      _passes = passes;
+      _loadingExtras = false;
+    });
   }
 
   @override
@@ -269,6 +300,18 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final isAdmin = auth.isLoggedIn;
+    final profile = context.watch<StudentProfileService>();
+
+    final isVolunteer = !isAdmin && _volunteerApp != null;
+    final isAudience = !isAdmin && _passes.isNotEmpty;
+    final role = isAdmin
+        ? _Role.admin
+        : isVolunteer
+            ? _Role.volunteer
+            : isAudience
+                ? _Role.audience
+                : _Role.guest;
+    final displayName = isAdmin ? auth.displayName : profile.name;
 
     return Scaffold(
       body: Container(
@@ -297,14 +340,36 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 ),
               ),
               Expanded(
-                child: SingleChildScrollView(
+                child: _loadingExtras
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 460),
                       child: Column(
                         children: [
+                          _AvatarHeader(name: displayName, role: role)
+                              .animate()
+                              .fadeIn(duration: 400.ms)
+                              .slideY(begin: 0.1, duration: 400.ms),
+                          const SizedBox(height: 28),
+                          _SectionDivider(label: 'PERSONAL DETAILS'),
+                          const SizedBox(height: 20),
+                          _BookingDetailsCard(
+                            formKey: _formKey,
+                            nameCtrl: _nameCtrl,
+                            emailCtrl: _emailCtrl,
+                            rollCtrl: _rollCtrl,
+                            saving: _saving,
+                            onSave: _save,
+                          ).animate().fadeIn(duration: 400.ms),
                           if (isAdmin) ...[
+                            const SizedBox(height: 28),
+                            _SectionDivider(label: 'ADMIN ACCOUNT'),
+                            const SizedBox(height: 20),
                             _AdminSection(
                               onChangePassword: () =>
                                   _handleChangePassword(context),
@@ -321,41 +386,34 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                       confirmLabel: confirmLabel,
                                       destructive: destructive),
                             ),
-                            const SizedBox(height: 28),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child:
-                                        Divider(color: Colors.white24)),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  child: Text(
-                                    'BOOKING DETAILS',
-                                    style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.5),
-                                      fontSize: 11,
-                                      letterSpacing: 1.2,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                    child:
-                                        Divider(color: Colors.white24)),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
                           ],
-                          _BookingDetailsCard(
-                            formKey: _formKey,
-                            nameCtrl: _nameCtrl,
-                            emailCtrl: _emailCtrl,
-                            rollCtrl: _rollCtrl,
-                            saving: _saving,
-                            onSave: _save,
-                          ).animate().fadeIn(duration: 400.ms),
+                          if (isVolunteer) ...[
+                            const SizedBox(height: 28),
+                            _SectionDivider(label: 'VOLUNTEER STATUS'),
+                            const SizedBox(height: 20),
+                            _VolunteerSection(
+                              app: _volunteerApp!,
+                              info: _volunteerInfo,
+                              onViewStatus: () => context.push(
+                                  '/volunteer/status/${_volunteerApp!.venueId}/${_volunteerApp!.volunteerId}'),
+                            ).animate().fadeIn(duration: 400.ms),
+                          ],
+                          if (isAudience) ...[
+                            const SizedBox(height: 28),
+                            _SectionDivider(label: 'MY BOOKINGS'),
+                            const SizedBox(height: 20),
+                            _AudienceSection(
+                              passes: _passes,
+                              onViewPass: (pass) => context.push(
+                                  '/student/pass/${pass.venueId}/${pass.seatId}'),
+                            ).animate().fadeIn(duration: 400.ms),
+                          ],
+                          const SizedBox(height: 28),
+                          _SectionDivider(label: 'APPEARANCE'),
+                          const SizedBox(height: 20),
+                          const _AppearanceCard()
+                              .animate()
+                              .fadeIn(duration: 400.ms),
                         ],
                       ),
                     ),
@@ -505,7 +563,6 @@ class _AdminSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthService>();
     final subscription = context.watch<SubscriptionService>();
     final venues = context.watch<AppState>().venues;
 
@@ -519,11 +576,6 @@ class _AdminSection extends StatelessWidget {
 
     return Column(
       children: [
-        _AvatarHeader(name: auth.displayName)
-            .animate()
-            .fadeIn(duration: 400.ms)
-            .slideY(begin: 0.1, duration: 400.ms),
-        const SizedBox(height: 24),
         _InfoCard(phone: subscription.phone).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 24),
         Row(
@@ -567,8 +619,6 @@ class _AdminSection extends StatelessWidget {
           ],
         ).animate().fadeIn(delay: 320.ms).slideY(
             begin: 0.08, delay: 320.ms, duration: 400.ms),
-        const SizedBox(height: 24),
-        const _AppearanceCard().animate().fadeIn(delay: 380.ms),
         const SizedBox(height: 24),
         _ActionTile(
           icon: Icons.password_rounded,
@@ -640,9 +690,40 @@ class _AdminSection extends StatelessWidget {
   }
 }
 
+enum _Role { admin, volunteer, audience, guest }
+
+extension on _Role {
+  String get label {
+    switch (this) {
+      case _Role.admin:
+        return 'Admin';
+      case _Role.volunteer:
+        return 'Volunteer';
+      case _Role.audience:
+        return 'Audience';
+      case _Role.guest:
+        return 'Guest';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case _Role.admin:
+        return Icons.admin_panel_settings_rounded;
+      case _Role.volunteer:
+        return Icons.volunteer_activism_rounded;
+      case _Role.audience:
+        return Icons.confirmation_number_rounded;
+      case _Role.guest:
+        return Icons.person_outline_rounded;
+    }
+  }
+}
+
 class _AvatarHeader extends StatelessWidget {
   final String name;
-  const _AvatarHeader({required this.name});
+  final _Role role;
+  const _AvatarHeader({required this.name, required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -650,39 +731,72 @@ class _AvatarHeader extends StatelessWidget {
     final dark = brandAccent(context);
     return Column(
       children: [
-        Container(
-          width: 92,
-          height: 92,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(colors: [seed, dark]),
-            boxShadow: [
-              BoxShadow(
-                color: dark.withValues(alpha: 0.5),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 92,
+              height: 92,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: [seed, dark]),
+                boxShadow: [
+                  BoxShadow(
+                    color: dark.withValues(alpha: 0.5),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(3),
-          child: ClipOval(
-            child: Container(
-              color: Colors.white.withValues(alpha: 0.12),
-              alignment: Alignment.center,
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+              padding: const EdgeInsets.all(3),
+              child: ClipOval(
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  alignment: Alignment.center,
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            Positioned(
+              bottom: -2,
+              right: -6,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: dark,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(role.icon, color: Colors.white, size: 11),
+                    const SizedBox(width: 4),
+                    Text(
+                      role.label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         Text(
-          name.isNotEmpty ? name : 'Admin',
+          name.isNotEmpty ? name : role.label,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -690,6 +804,219 @@ class _AvatarHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SectionDivider extends StatelessWidget {
+  final String label;
+  const _SectionDivider({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: Colors.white24)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 11,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const Expanded(child: Divider(color: Colors.white24)),
+      ],
+    );
+  }
+}
+
+class _VolunteerSection extends StatelessWidget {
+  final VolunteerApplication app;
+  final VolunteerInfo? info;
+  final VoidCallback onViewStatus;
+
+  const _VolunteerSection({
+    required this.app,
+    required this.info,
+    required this.onViewStatus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final status = info?.status ?? 'pending';
+    final (statusColor, statusLabel, statusIcon) = switch (status) {
+      'approved' => (kSuccess, 'Approved', Icons.check_circle_rounded),
+      'rejected' => (kError, 'Rejected', Icons.cancel_rounded),
+      _ => (kWarning, 'Pending Approval', Icons.hourglass_top_rounded),
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: kIndigo.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.volunteer_activism_rounded,
+                    color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      app.venueName.isNotEmpty ? app.venueName : 'Venue',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Volunteer application',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(statusIcon, color: statusColor, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  statusLabel,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onViewStatus,
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('View Status'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AudienceSection extends StatelessWidget {
+  final List<SavedPass> passes;
+  final ValueChanged<SavedPass> onViewPass;
+
+  const _AudienceSection({required this.passes, required this.onViewPass});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < passes.length; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          _PassTile(pass: passes[i], onTap: () => onViewPass(passes[i])),
+        ],
+      ],
+    );
+  }
+}
+
+class _PassTile extends StatelessWidget {
+  final SavedPass pass;
+  final VoidCallback onTap;
+  const _PassTile({required this.pass, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: kIndigo.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.confirmation_number_rounded,
+                    color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pass.venueName.isNotEmpty ? pass.venueName : 'Venue',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      'Seat ${pass.seatLabel}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.white.withValues(alpha: 0.4)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

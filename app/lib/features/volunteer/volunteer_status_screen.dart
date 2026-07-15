@@ -83,26 +83,47 @@ class _VolunteerStatusScreenState extends State<VolunteerStatusScreen> {
       body: Container(
         decoration: authGradient(context),
         child: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: Responsive.horizontalPadding(context),
-                  vertical: 24),
-              child: _loading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : _notFound
-                      ? _StatusCard(
-                          icon: Icons.error_outline,
-                          iconColor: kError,
-                          title: 'Application not found',
-                          message:
-                              'This volunteer application could no longer be '
-                              'found. Please apply again.',
-                          onCancel: _cancelApplication,
-                          cancelLabel: 'Back to Home',
-                        )
-                      : _buildStatus(_info!),
-            ),
+          child: Column(
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.person_outline,
+                          color: Colors.white),
+                      tooltip: 'My Profile',
+                      onPressed: () => context.push('/student/profile'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: Responsive.horizontalPadding(context),
+                        vertical: 24),
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : _notFound
+                            ? _StatusCard(
+                                icon: Icons.error_outline,
+                                iconColor: kError,
+                                title: 'Application not found',
+                                message:
+                                    'This volunteer application could no '
+                                    'longer be found. Please apply again.',
+                                onCancel: _cancelApplication,
+                                cancelLabel: 'Back to Home',
+                              )
+                            : _buildStatus(_info!),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -104,6 +104,13 @@ class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.person_outline,
+                          color: Colors.white),
+                      tooltip: 'My Profile',
+                      onPressed: () => context.push('/student/profile'),
+                    ),
                   ],
                 ),
               ),
