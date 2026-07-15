@@ -17,15 +17,6 @@ class SplashScreen extends StatelessWidget {
                 horizontal: MediaQuery.sizeOf(context).width * 0.07),
             child: Column(
               children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: const Icon(Icons.person_outline,
-                        color: Colors.white),
-                    tooltip: 'My Profile',
-                    onPressed: () => context.push('/student/profile'),
-                  ),
-                ),
                 const Spacer(flex: 2),
                 // Logo
                 Container(
