@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/app_state.dart';
@@ -950,13 +951,92 @@ class _AudienceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final venueCount = passes.map((p) => p.venueId).toSet().length;
+    final now = DateTime.now();
+
+    final sorted = [...passes]..sort((a, b) {
+        if (a.eventDate == null && b.eventDate == null) return 0;
+        if (a.eventDate == null) return 1;
+        if (b.eventDate == null) return -1;
+        return a.eventDate!.compareTo(b.eventDate!);
+      });
+    final upcoming =
+        sorted.where((p) => p.eventDate == null || !p.eventDate!.isBefore(
+              DateTime(now.year, now.month, now.day),
+            )).toList();
+    final past = sorted
+        .where((p) =>
+            p.eventDate != null &&
+            p.eventDate!.isBefore(DateTime(now.year, now.month, now.day)))
+        .toList()
+        .reversed
+        .toList();
+
     return Column(
       children: [
-        for (var i = 0; i < passes.length; i++) ...[
-          if (i > 0) const SizedBox(height: 12),
-          _PassTile(pass: passes[i], onTap: () => onViewPass(passes[i])),
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                icon: Icons.dashboard_customize_rounded,
+                value: '$venueCount',
+                label: venueCount == 1 ? 'Venue' : 'Venues Attending',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatTile(
+                icon: Icons.confirmation_number_rounded,
+                value: '${passes.length}',
+                label: passes.length == 1 ? 'Booking' : 'Total Bookings',
+              ),
+            ),
+          ],
+        ),
+        if (upcoming.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _SubLabel(text: 'UPCOMING'),
+          const SizedBox(height: 10),
+          for (var i = 0; i < upcoming.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            _PassTile(pass: upcoming[i], onTap: () => onViewPass(upcoming[i])),
+          ],
+        ],
+        if (past.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _SubLabel(text: 'PAST'),
+          const SizedBox(height: 10),
+          for (var i = 0; i < past.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            _PassTile(
+              pass: past[i],
+              onTap: () => onViewPass(past[i]),
+              dimmed: true,
+            ),
+          ],
         ],
       ],
+    );
+  }
+}
+
+class _SubLabel extends StatelessWidget {
+  final String text;
+  const _SubLabel({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.45),
+          fontSize: 10.5,
+          letterSpacing: 1.2,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
@@ -964,12 +1044,18 @@ class _AudienceSection extends StatelessWidget {
 class _PassTile extends StatelessWidget {
   final SavedPass pass;
   final VoidCallback onTap;
-  const _PassTile({required this.pass, required this.onTap});
+  final bool dimmed;
+  const _PassTile({
+    required this.pass,
+    required this.onTap,
+    this.dimmed = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final opacity = dimmed ? 0.045 : 0.08;
     return Material(
-      color: Colors.white.withValues(alpha: 0.08),
+      color: Colors.white.withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -982,11 +1068,12 @@ class _PassTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: kIndigo.withValues(alpha: 0.2),
+                  color: kIndigo.withValues(alpha: dimmed ? 0.1 : 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.confirmation_number_rounded,
-                    color: Colors.white, size: 20),
+                child: Icon(Icons.confirmation_number_rounded,
+                    color: Colors.white.withValues(alpha: dimmed ? 0.5 : 1),
+                    size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -995,16 +1082,18 @@ class _PassTile extends StatelessWidget {
                   children: [
                     Text(
                       pass.venueName.isNotEmpty ? pass.venueName : 'Venue',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: dimmed ? 0.6 : 1),
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
                     ),
                     Text(
-                      'Seat ${pass.seatLabel}',
+                      pass.eventDate != null
+                          ? '${DateFormat('MMM d, yyyy').format(pass.eventDate!)} · Seat ${pass.seatLabel}'
+                          : 'Seat ${pass.seatLabel}',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: Colors.white.withValues(alpha: 0.55),
                         fontSize: 12,
                       ),
                     ),

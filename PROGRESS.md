@@ -3,6 +3,140 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-17 session
+
+### 22. Audience profile sharpened for multiple venues
+- User said "there are no profile for audience" and pointed out an audience
+  member may have booked seats at multiple venues. The Audience section added
+  in item 21 (2026-07-16) already existed and iterated all saved passes, but
+  had no sense of *when* each event was — just a flat list of venue/seat
+  pairs, no summary, no distinction between an event happening next week vs
+  one that already passed.
+- `app/lib/core/services/pass_storage.dart`: `SavedPass` gained an optional
+  `eventDate` field (nullable, ISO-string persisted — old saved passes
+  without it just deserialize with `eventDate: null`, no migration needed).
+- `app/lib/features/student/booking/booking_screen.dart`: now passes
+  `eventDate: _venue?.eventDate` when saving a pass after a successful
+  booking.
+- `app/lib/features/student/profile/student_profile_screen.dart`
+  `_AudienceSection` rewritten:
+  - Two stat tiles up top (reusing the same `_StatTile` admin already had):
+    distinct venue count ("Venues Attending") and total booking count,
+    singular/plural label handling.
+  - Passes now split into **UPCOMING** / **PAST** groups (by comparing
+    `eventDate` to today, passes without a date treated as upcoming so they
+    don't silently vanish), upcoming sorted soonest-first, past sorted most-
+    recent-first, past entries rendered visibly dimmed.
+  - Each pass tile now shows the formatted event date next to the seat label
+    instead of just "Seat X".
+- `flutter analyze` clean. Not yet verified live — no device pass currently
+  has `eventDate` populated until a new booking is made post-update, so the
+  upcoming/past split and date text should be checked against a fresh
+  booking, not an old saved pass.
+
+## 2026-07-16 session
+
+Repo is a single Flutter codebase (`app/`) built for both mobile and web — no
+separate web frontend, so every fix below applies to both targets from one
+source change.
+
+### 21. Profile screen redesigned to be role-aware (Admin/Volunteer/Audience/Guest)
+- User asked for Audience and Volunteer to have "their own" profile too, and
+  for the shared profile screen to show correct info per role, in order, with
+  a nicer UI. It was previously admin-only-aware: booking-details form
+  always, plus an admin section bolted on top when signed in — Volunteer/
+  Audience got no role-specific content at all, and no entry point into the
+  screen existed from the volunteer flow.
+- `app/lib/features/student/profile/student_profile_screen.dart` rewritten:
+  - New fixed section order for everyone: avatar header (now carries a role
+    badge chip — Admin/Volunteer/Audience/Guest, colored + icon) → Personal
+    Details form (name/email/roll, unchanged data) → role-specific section →
+    Appearance (theme picker, moved out of admin-only gating so every role
+    can use it).
+  - New `_VolunteerSection`: shown when `VolunteerService.getActiveApplication()`
+    finds an active application — venue name, live status chip (pending/
+    approved/rejected via `VolunteerService.getStatus`), "View Status" button
+    pushing to the existing `/volunteer/status/:venueId/:volunteerId` screen
+    (reuses its polling/auto-redirect-to-scanner logic, not duplicated here).
+  - New `_AudienceSection`: shown when `PassStorage.getPasses()` has saved
+    passes — lists each booked venue/seat, tapping one pushes to
+    `/student/pass/:venueId/:seatId`.
+  - `_AdminSection` unchanged in content, just no longer renders its own
+    avatar header or appearance card (both hoisted to the shared top level).
+  - Sections are additive, not exclusive on role: e.g. a device that has both
+    volunteered somewhere and booked a seat elsewhere shows both blocks.
+- Added a profile icon entry point to `volunteer_join_screen.dart` (top-right,
+  next to the back arrow) and to `volunteer_status_screen.dart` (previously
+  had no header row at all) — Volunteer had no way to reach profile before
+  this session except by backing out to the role picker.
+- `flutter analyze` clean.
+- Not yet verified live: role badge rendering, volunteer/audience section
+  data loading (both are async in `initState` via `_loadExtras`), and that
+  the new volunteer profile icons don't collide with existing back-button
+  layout on a small screen.
+
+### 20. Android/gesture back button exiting the app instead of navigating back — fixed
+- **Symptom**: pressing the phone's back button from inside the app (e.g.
+  after picking Admin/Audience/Volunteer from the role picker) closed the app
+  entirely instead of going back a screen.
+- **Root cause**: `SplashScreen`'s three role tiles
+  (`app/lib/features/splash/splash_screen.dart`) called `context.go(...)` for
+  role selection. `go_router`'s `go()` *replaces* the whole navigation stack
+  rather than pushing onto it, so the moment a role was picked, `'/'` (the
+  role picker) was discarded from history — there was nothing left on the
+  Navigator stack to pop to, so the system back button fell through and
+  exited the app.
+- **Fix**: changed all three role-tile `onTap` handlers to `context.push(...)`
+  instead of `context.go(...)`, so `'/'` stays on the stack underneath. The
+  top-level `redirect` callback in `router.dart` (subscription/login gating)
+  still applies identically under `push`, since go_router evaluates it
+  per-navigation regardless of push vs go.
+- Not yet re-verified on-device; `flutter analyze` is clean.
+
+### 19. Redundant profile icon on the role-picker screen — removed
+- User was confused why a profile icon appeared on the splash/role-picker
+  screen (before even choosing a role) leading to the same
+  `StudentProfileScreen`, describing it as "profile comes 2 times — Venue
+  Lock screen and Admin screen." There was never a separate admin profile
+  screen (confirmed no `/admin/profile` route or admin-side profile nav
+  exists) — the actual issue was this stray top-right icon on
+  `SplashScreen` (`app/lib/features/splash/splash_screen.dart`), irrelevant
+  before role selection and definitely irrelevant to the Admin role.
+- **Fix**: removed the `IconButton`/`Align` block from `SplashScreen`. The
+  only remaining entry point into profile was (at the time) the "Edit
+  Profile" button on the Audience booking screen — since superseded by item
+  21 above, which added proper entry points for every role.
+
+### 18. OTP digits clipped/not fully visible — fixed
+- **Symptom**: on the OTP entry screen, typed digits looked cut off inside
+  their boxes.
+- **Root cause**: `_OtpBox` in
+  `app/lib/features/admin/subscription/otp_screen.dart` sizes each digit box
+  at a fixed 42×54px, but its `TextField`'s `InputDecoration` set no
+  `contentPadding`/`isDense`/`isCollapsed`, so Material's default vertical
+  content padding combined with the 22px digit glyph pushed text outside the
+  fixed-height box (worst on web/Chrome where font metrics differ slightly
+  from mobile Skia rendering).
+- **Fix**: added `isCollapsed: true` and
+  `contentPadding: EdgeInsets.symmetric(vertical: 16)` to that
+  `InputDecoration` so the digit centers and renders fully inside the box.
+  (Note: `forgot_password_screen.dart` has a duplicate `_OtpBox` widget per
+  item 1's old fix note — not touched this session, may want the same fix if
+  the same clipping is reported there.)
+
+### 17. Phone number asked again at login/registration after subscription — mitigated
+- User asked why they had to type a phone number again at login/registration
+  when they'd already given it during the bdapps subscription gate. Confirmed
+  via `app/AUTH_AND_SUBSCRIPTION.md` this is **by design**: subscription
+  phone (carrier-billing gate, `SubscriptionService`) and login/registration
+  phone (`AuthService`, a separate account system) are two intentionally
+  decoupled backends — not a bug, not deduplicated data.
+- **Fix (UX mitigation, not a backend merge)**: `admin_login_screen.dart`'s
+  `_LoginForm` and `_RegisterForm` now pre-fill their phone field from
+  `SubscriptionService.phone` in `initState` if it's already known, so
+  returning users see it pre-populated instead of blank — still editable in
+  case the login account uses a different number.
+
 ## 2026-07-14 session
 
 ### 17. Remaining bdapps-adjacent extras — LICENSE, store listing copy

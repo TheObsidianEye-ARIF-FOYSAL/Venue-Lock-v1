@@ -95,6 +95,7 @@ class _BookingScreenState extends State<BookingScreen> {
         seatId: widget.seatId,
         venueName: _venue?.name ?? '',
         seatLabel: _seat?.id ?? widget.seatId,
+        eventDate: _venue?.eventDate,
       ));
       if (!mounted) return;
       context.go('/student/pass/${widget.venueId}/${widget.seatId}');

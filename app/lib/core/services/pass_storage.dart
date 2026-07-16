@@ -10,12 +10,14 @@ class SavedPass {
   final String seatId;
   final String venueName;
   final String seatLabel;
+  final DateTime? eventDate;
 
   SavedPass({
     required this.venueId,
     required this.seatId,
     required this.venueName,
     required this.seatLabel,
+    this.eventDate,
   });
 
   Map<String, dynamic> toJson() => {
@@ -23,6 +25,7 @@ class SavedPass {
         'seatId': seatId,
         'venueName': venueName,
         'seatLabel': seatLabel,
+        'eventDate': eventDate?.toIso8601String(),
       };
 
   factory SavedPass.fromJson(Map<String, dynamic> json) => SavedPass(
@@ -30,6 +33,9 @@ class SavedPass {
         seatId: json['seatId'] as String,
         venueName: json['venueName'] as String? ?? '',
         seatLabel: json['seatLabel'] as String? ?? '',
+        eventDate: json['eventDate'] != null
+            ? DateTime.tryParse(json['eventDate'] as String)
+            : null,
       );
 }
 
