@@ -302,16 +302,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     final auth = context.watch<AuthService>();
     final isAdmin = auth.isLoggedIn;
     final profile = context.watch<StudentProfileService>();
-
-    final isVolunteer = !isAdmin && _volunteerApp != null;
-    final isAudience = !isAdmin && _passes.isNotEmpty;
-    final role = isAdmin
-        ? _Role.admin
-        : isVolunteer
-            ? _Role.volunteer
-            : isAudience
-                ? _Role.audience
-                : _Role.guest;
+    final role = isAdmin ? _Role.admin : _Role.member;
     final displayName = isAdmin ? auth.displayName : profile.name;
 
     return Scaffold(
@@ -388,27 +379,35 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                       destructive: destructive),
                             ),
                           ],
-                          if (isVolunteer) ...[
-                            const SizedBox(height: 28),
-                            _SectionDivider(label: 'VOLUNTEER STATUS'),
-                            const SizedBox(height: 20),
-                            _VolunteerSection(
-                              app: _volunteerApp!,
-                              info: _volunteerInfo,
-                              onViewStatus: () => context.push(
-                                  '/volunteer/status/${_volunteerApp!.venueId}/${_volunteerApp!.volunteerId}'),
-                            ).animate().fadeIn(duration: 400.ms),
-                          ],
-                          if (isAudience) ...[
-                            const SizedBox(height: 28),
-                            _SectionDivider(label: 'MY BOOKINGS'),
-                            const SizedBox(height: 20),
-                            _AudienceSection(
-                              passes: _passes,
-                              onViewPass: (pass) => context.push(
-                                  '/student/pass/${pass.venueId}/${pass.seatId}'),
-                            ).animate().fadeIn(duration: 400.ms),
-                          ],
+                          const SizedBox(height: 28),
+                          _SectionDivider(label: 'MY BOOKINGS'),
+                          const SizedBox(height: 20),
+                          _passes.isEmpty
+                              ? const _EmptyState(
+                                  icon: Icons.confirmation_number_outlined,
+                                  message: 'No bookings yet — join a venue '
+                                      'with its code to reserve a seat.',
+                                )
+                              : _AudienceSection(
+                                  passes: _passes,
+                                  onViewPass: (pass) => context.push(
+                                      '/student/pass/${pass.venueId}/${pass.seatId}'),
+                                ).animate().fadeIn(duration: 400.ms),
+                          const SizedBox(height: 28),
+                          _SectionDivider(label: 'VOLUNTEER STATUS'),
+                          const SizedBox(height: 20),
+                          _volunteerApp == null
+                              ? const _EmptyState(
+                                  icon: Icons.volunteer_activism_outlined,
+                                  message: 'Not volunteering anywhere yet — '
+                                      'apply with a venue\'s access code.',
+                                )
+                              : _VolunteerSection(
+                                  app: _volunteerApp!,
+                                  info: _volunteerInfo,
+                                  onViewStatus: () => context.push(
+                                      '/volunteer/status/${_volunteerApp!.venueId}/${_volunteerApp!.volunteerId}'),
+                                ).animate().fadeIn(duration: 400.ms),
                           const SizedBox(height: 28),
                           _SectionDivider(label: 'APPEARANCE'),
                           const SizedBox(height: 20),
