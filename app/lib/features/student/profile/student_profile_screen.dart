@@ -690,19 +690,15 @@ class _AdminSection extends StatelessWidget {
   }
 }
 
-enum _Role { admin, volunteer, audience, guest }
+enum _Role { admin, member }
 
 extension on _Role {
   String get label {
     switch (this) {
       case _Role.admin:
         return 'Admin';
-      case _Role.volunteer:
-        return 'Volunteer';
-      case _Role.audience:
-        return 'Audience';
-      case _Role.guest:
-        return 'Guest';
+      case _Role.member:
+        return 'Member';
     }
   }
 
@@ -710,13 +706,49 @@ extension on _Role {
     switch (this) {
       case _Role.admin:
         return Icons.admin_panel_settings_rounded;
-      case _Role.volunteer:
-        return Icons.volunteer_activism_rounded;
-      case _Role.audience:
-        return Icons.confirmation_number_rounded;
-      case _Role.guest:
-        return Icons.person_outline_rounded;
+      case _Role.member:
+        return Icons.person_rounded;
     }
+  }
+}
+
+/// Shown in place of the Volunteer/Audience sections when the person hasn't
+/// used that part of the app yet — keeps the profile's section order fixed
+/// and predictable for every user instead of sections popping in and out.
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  const _EmptyState({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white.withValues(alpha: 0.35), size: 28),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 12.5,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

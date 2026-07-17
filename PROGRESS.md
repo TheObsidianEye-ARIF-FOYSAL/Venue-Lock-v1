@@ -5,6 +5,29 @@ Read this file first when resuming work here after a restart.
 
 ## 2026-07-17 session
 
+### 23. Profile sections un-gated — same fixed layout for every user
+- User pushed back on item 21/22's design (Volunteer/Audience sections only
+  rendering when that role's data existed): "user is one person - then one
+  profile is enough to show all info," i.e. sections popping in/out based on
+  activity read as separate role-profiles stitched together, not one profile.
+- `student_profile_screen.dart`: `MY BOOKINGS` and `VOLUNTEER STATUS` are now
+  always rendered in a fixed order (Personal Details → Admin Account →
+  My Bookings → Volunteer Status → Appearance) for every user, admin or not.
+  When there's no data for a section, it shows a small `_EmptyState` card
+  ("No bookings yet — join a venue with its code to reserve a seat." /
+  "Not volunteering anywhere yet — apply with a venue's access code.")
+  instead of disappearing.
+- Admin Account is the one exception, still gated on `auth.isLoggedIn` — it's
+  a real authenticated account/session with actions (logout, change
+  password, delete account) that are meaningless to show for someone who
+  isn't signed in, unlike Volunteer/Audience which are just local
+  device-stored activity with no login concept.
+- Simplified `_Role` from four values (admin/volunteer/audience/guest) down
+  to two (admin/member) since the avatar badge no longer needs to guess a
+  "primary" role from whichever section happened to have data — every non-
+  admin is just "Member" now.
+- `flutter analyze` clean.
+
 ### 22. Audience profile sharpened for multiple venues
 - User said "there are no profile for audience" and pointed out an audience
   member may have booked seats at multiple venues. The Audience section added
