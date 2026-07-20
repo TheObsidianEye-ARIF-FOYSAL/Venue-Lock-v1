@@ -3,6 +3,21 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — item 33)
+
+### 33. Profile icon restored on the role-picker screen; dead avatar removed from Admin
+- Partial reversal of item 29 above, per explicit user follow-up: they want
+  a profile entry point back on the splash/role-picker screen ("VenueLock"
+  title, Admin/Audience/Volunteer cards) in addition to the post-login
+  landing screen — `splash_screen.dart` top-right `IconButton` → push
+  `/student/profile`, same as before item 29 removed it.
+- Also removed the `CircleAvatar` in `venue_list_screen.dart`'s AppBar
+  actions — it showed the admin's initial but had no `onTap`, i.e. was a
+  non-functional "profile" the user rightly called out as unusable. Deleted
+  outright rather than wired up, since Profile is already one tap away via
+  the back arrow → role picker → profile icon, or directly reachable as the
+  post-login landing screen (item 29).
+
 ## 2026-07-21 session (continued — items 28-32)
 
 User gave a 7-item punch list after item 27. Items 1,2,3,5,7 fixed below;
