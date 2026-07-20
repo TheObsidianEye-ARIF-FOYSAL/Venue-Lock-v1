@@ -190,30 +190,12 @@ class _BookingScreenState extends State<BookingScreen> {
                         ),
                       ],
                       const SizedBox(height: 28),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'YOUR INFORMATION',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
-                                    letterSpacing: 1.2),
-                          ),
-                          TextButton.icon(
-                            onPressed: () => context.push('/student/profile'),
-                            icon: const Icon(Icons.edit_outlined, size: 16),
-                            label: const Text('Edit Profile'),
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(0, 0),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'YOUR INFORMATION',
+                        style: Theme.of(context).textTheme.labelSmall
+                            ?.copyWith(
+                                color: Theme.of(context).colorScheme.outline,
+                                letterSpacing: 1.2),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(

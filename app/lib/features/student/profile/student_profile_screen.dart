@@ -316,9 +316,14 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 child: Row(
                   children: [
                     IconButton(
+                      // Profile is the landing screen after login (no route
+                      // below it to pop to) — falls back to the role picker
+                      // so a logged-in admin can still switch to Audience/
+                      // Volunteer on this device.
                       icon: const Icon(Icons.arrow_back_ios_new_rounded,
                           color: Colors.white, size: 18),
-                      onPressed: () => context.pop(),
+                      onPressed: () =>
+                          context.canPop() ? context.pop() : context.push('/'),
                     ),
                     const Text(
                       'My Profile',
@@ -577,7 +582,16 @@ class _AdminSection extends StatelessWidget {
     return Column(
       children: [
         _InfoCard(phone: subscription.phone).animate().fadeIn(delay: 150.ms),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => context.push('/admin/venues'),
+            icon: const Icon(Icons.dashboard_customize_rounded),
+            label: const Text('Manage Venues'),
+          ),
+        ).animate().fadeIn(delay: 200.ms),
+        const SizedBox(height: 20),
         Row(
           children: [
             Expanded(
