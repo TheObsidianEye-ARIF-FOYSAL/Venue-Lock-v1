@@ -120,8 +120,9 @@ class _PhoneScreenState extends State<PhoneScreen> {
                                 begin: -0.1, delay: 150.ms, duration: 400.ms),
                             const SizedBox(height: 8),
                             Text(
-                              'We\'ll send a 6-digit OTP to verify your '
-                              'number.',
+                              'Already subscribed? We\'ll take you straight '
+                              'to login. Otherwise, we\'ll send a 6-digit '
+                              'OTP to verify your number.',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.7),
                                 fontSize: 14,
@@ -160,7 +161,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                                     ),
                                     const SizedBox(height: 20),
                                     AuthPrimaryButton(
-                                      label: 'Send OTP',
+                                      label: 'Continue',
                                       loading: _loading,
                                       onTap: _submit,
                                     ),
