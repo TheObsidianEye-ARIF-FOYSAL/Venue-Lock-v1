@@ -16,7 +16,6 @@ class VenueListScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     final venues = appState.venues;
     final auth = context.watch<AuthService>();
-    const photoUrl = null;
     final name = auth.displayName;
 
     return Scaffold(
@@ -42,23 +41,6 @@ class VenueListScreen extends StatelessWidget {
             ),
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
-              backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-              child: photoUrl == null
-                  ? Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                    )
-                  : null,
-            ),
-          ),
-        ],
       ),
       body: venues.isEmpty
           ? _EmptyState(
