@@ -806,10 +806,13 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _AvatarHeader extends StatelessWidget {
+/// Avatar + name + a row of every role badge that currently applies (a
+/// person can be Admin, Volunteer, and Audience on the same device at the
+/// same time — this is never collapsed down to a single "primary" role).
+class _ProfileHeader extends StatelessWidget {
   final String name;
-  final _Role role;
-  const _AvatarHeader({required this.name, required this.role});
+  final List<_RoleBadge> badges;
+  const _ProfileHeader({required this.name, required this.badges});
 
   @override
   Widget build(BuildContext context) {
@@ -817,76 +820,130 @@ class _AvatarHeader extends StatelessWidget {
     final dark = brandAccent(context);
     return Column(
       children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [seed, dark]),
-                boxShadow: [
-                  BoxShadow(
-                    color: dark.withValues(alpha: 0.5),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+        Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [seed, dark]),
+            boxShadow: [
+              BoxShadow(
+                color: dark.withValues(alpha: 0.5),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
-              padding: const EdgeInsets.all(3),
-              child: ClipOval(
-                child: Container(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  alignment: Alignment.center,
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
+            ],
+          ),
+          padding: const EdgeInsets.all(3),
+          child: ClipOval(
+            child: Container(
+              color: Colors.white.withValues(alpha: 0.12),
+              alignment: Alignment.center,
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
                 ),
               ),
             ),
-            Positioned(
-              bottom: -2,
-              right: -6,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: dark,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(role.icon, color: Colors.white, size: 11),
-                    const SizedBox(width: 4),
-                    Text(
-                      role.label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
         Text(
-          name.isNotEmpty ? name : role.label,
+          name.isNotEmpty ? name : 'Welcome',
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 19,
             fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: badges
+              .map((b) => Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.18)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(b.icon, color: Colors.white, size: 12),
+                        const SizedBox(width: 5),
+                        Text(
+                          b.label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+/// A thin divider used *inside* a card to separate logical groups of rows
+/// (e.g. account-management rows from destructive ones) — never used
+/// between two different cards, only within one.
+class _CardDivider extends StatelessWidget {
+  const _CardDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+    );
+  }
+}
+
+/// A compact number+label used inside a stat strip within a card (as
+/// opposed to [_StatTile], which is its own bordered box for places where
+/// stats aren't already inside a card).
+class _MiniStat extends StatelessWidget {
+  final String value;
+  final String label;
+  const _MiniStat({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.55),
+            fontSize: 10.5,
           ),
         ),
       ],
@@ -894,29 +951,56 @@ class _AvatarHeader extends StatelessWidget {
   }
 }
 
-class _SectionDivider extends StatelessWidget {
+/// One row inside a settings-style card (Change Password, Logout, etc) —
+/// rows in the same group sit directly next to each other with no gap, only
+/// a hairline divider between groups via [_CardDivider], matching the
+/// "grouped list with dividers, not separate boxes" pattern used by
+/// Android's own Settings app.
+class _SettingsRow extends StatelessWidget {
+  final IconData icon;
   final String label;
-  const _SectionDivider({required this.label});
+  final VoidCallback onTap;
+  final bool destructive;
+  final bool isLast;
+  const _SettingsRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Divider(color: Colors.white24)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 11,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w700,
-            ),
+    final color = destructive ? kError : Colors.white;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+              horizontal: 4, vertical: isLast ? 12 : 13),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.white.withValues(alpha: 0.35), size: 20),
+            ],
           ),
         ),
-        const Expanded(child: Divider(color: Colors.white24)),
-      ],
+      ),
     );
   }
 }
