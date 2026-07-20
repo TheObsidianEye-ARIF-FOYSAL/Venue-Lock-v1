@@ -39,9 +39,23 @@ class _PhoneScreenState extends State<PhoneScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    final ok = await context
-        .read<SubscriptionService>()
-        .sendOtp(_phoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''));
+    final phone = _phoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final service = context.read<SubscriptionService>();
+
+    // Already have a login account for this number? They passed this gate
+    // once before (an account can't exist without it) — skip the OTP
+    // round-trip and let them go straight to phone+password login.
+    final hasAccount = await service.checkExistingAccount(phone);
+    if (!mounted) return;
+    if (hasAccount == true) {
+      await service.markSubscribedLocally(phone);
+      if (!mounted) return;
+      setState(() => _loading = false);
+      context.go('/admin/login');
+      return;
+    }
+
+    final ok = await service.sendOtp(phone);
     if (!mounted) return;
     setState(() => _loading = false);
     if (ok) {

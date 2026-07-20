@@ -8,12 +8,49 @@ import '../../../app/theme.dart';
 import '../../../core/models/seat.dart';
 import '../../../core/services/app_state.dart';
 
-class VenueDetailScreen extends StatelessWidget {
+class VenueDetailScreen extends StatefulWidget {
   final String venueId;
   const VenueDetailScreen({super.key, required this.venueId});
 
   @override
+  State<VenueDetailScreen> createState() => _VenueDetailScreenState();
+}
+
+class _VenueDetailScreenState extends State<VenueDetailScreen> {
+  List<Seat>? _seats;
+  bool _loading = true;
+  bool _refreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load({bool showSpinner = true}) async {
+    if (showSpinner) {
+      setState(() => _refreshing = true);
+    }
+    try {
+      final seats = await context.read<AppState>().getSeats(widget.venueId);
+      if (!mounted) return;
+      setState(() {
+        _seats = seats;
+        _loading = false;
+        _refreshing = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _refreshing = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final venueId = widget.venueId;
     final appState = context.watch<AppState>();
     final venue = appState.getVenueById(venueId);
 
@@ -44,6 +81,19 @@ class VenueDetailScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/admin/venues'),
         ),
+        actions: [
+          IconButton(
+            icon: _refreshing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh attendees',
+            onPressed: _refreshing ? null : () => _load(),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () =>
@@ -53,14 +103,15 @@ class VenueDetailScreen extends StatelessWidget {
         backgroundColor: kIndigo,
         foregroundColor: Colors.white,
       ),
-      body: StreamBuilder<List<Seat>>(
-        stream: appState.seatsStream(venueId),
-        builder: (context, snap) {
-          final seats = snap.data ?? [];
+      body: Builder(
+        builder: (context) {
+          final seats = _seats ?? [];
           final bookedSeats =
               seats.where((s) => s.status == 'booked').toList();
 
-          return ListView(
+          return RefreshIndicator(
+            onRefresh: () => _load(showSpinner: false),
+            child: ListView(
             padding: EdgeInsets.symmetric(
                 horizontal: Responsive.horizontalPadding(context),
                 vertical: 16),
@@ -254,7 +305,7 @@ class VenueDetailScreen extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              if (snap.connectionState == ConnectionState.waiting)
+              if (_loading)
                 const Center(child: CircularProgressIndicator())
               else if (bookedSeats.isEmpty)
                 Card(
@@ -333,6 +384,7 @@ class VenueDetailScreen extends StatelessWidget {
                     )),
               const SizedBox(height: 80),
             ],
+            ),
           );
         },
       ),

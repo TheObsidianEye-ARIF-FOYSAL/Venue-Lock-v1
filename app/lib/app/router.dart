@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../core/services/service_instances.dart';
 import '../features/splash/splash_screen.dart';
@@ -23,6 +24,13 @@ import '../features/admin/venue_detail/volunteer_review_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/',
+  // Re-run `redirect` below whenever login/subscription state changes on its
+  // own (not just when something explicitly navigates) — without this,
+  // go_router only re-evaluates redirects on an actual navigation event, so
+  // a state change with no matching `context.go`/`push` right after it could
+  // leave the user stranded on a stale screen (e.g. one gate's screen after
+  // the other gate's state already flipped).
+  refreshListenable: Listenable.merge([authService, subscriptionService]),
   redirect: (context, state) {
     final path = state.uri.path;
     final isSubscribePath = path.startsWith('/admin/subscribe');

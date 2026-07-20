@@ -3,6 +3,135 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session
+
+### 27. Already-subscribed returning admins can skip OTP and go straight to password login — wired to server
+- Follow-up to item 26. User clarified the actual want: a returning admin
+  who's already subscribed shouldn't have to repeat the BdApps OTP
+  round-trip at all — phone + password login should be enough — and asked
+  to actually connect this to the server, not just patch client state.
+- **Constraint discovered**: BdApps carrier billing has no "check
+  subscription status" endpoint reachable without an OTP challenge — status
+  can only be learned via the `send_otp.php` → `verify_otp.php` round-trip.
+  So there's no way to silently confirm "still an active subscriber"
+  server-side without OTP. What *is* available and previously unused:
+  `ARIF(VL)/venuelock_check_phone.php` — checks whether a phone already has
+  a row in the `users` table (a registered login account). Since account
+  registration is only reachable after passing the subscribe+OTP gate once,
+  an existing account is a reliable proxy for "already subscribed before."
+- `core/services/subscription_service.dart`: added
+  `checkExistingAccount(phone)` (calls `venuelock_check_phone.php`, returns
+  `null` on network failure so callers fail open to the normal OTP flow
+  rather than blocking) and `markSubscribedLocally(phone)` (same effect as
+  completing OTP verification — persists the phone under the existing
+  `venuelock_subscribed_phone` prefs key, sets `isSubscribed = true`).
+- `features/admin/subscription/phone_screen.dart`: `_submit()` now calls
+  `checkExistingAccount` first. If it returns `true`, calls
+  `markSubscribedLocally` and routes straight to `/admin/login` — no OTP
+  screen. Otherwise (new number, or check failed/timed out) falls through to
+  the existing `sendOtp` → OTP screen flow unchanged.
+- `flutter analyze` clean. Not yet verified live — needs a real phone number
+  with an existing `users` row tested against the production backend to
+  confirm `venuelock_check_phone.php` actually short-circuits to the login
+  screen as intended.
+
+### 25. `app_v2` deleted by user — `app/` is the only app again
+- User deleted the `app_v2` rebuild from item 24 (2026-07-18 session) after
+  trying it. No reason given. `app/` remains the one live codebase.
+
+### 26. Post-logout stuck on the subscribe/phone/OTP screen instead of login — router hardened
+- User reported: after logging out of an already-subscribed account, they
+  couldn't log back in — landed on "Enter mobile number" with a "Send OTP"
+  button (the Gate-1 subscribe/phone screen), not the Gate-2 login screen.
+  Pointed at `C:\Local_Disk_D\App\MedRemind\med_remind_v2` and asked to
+  follow that app's server/gating functionality.
+- Read MedRemind's `app/AUTH_AND_SUBSCRIPTION.md` in full and cross-checked
+  its actual `auth_service.dart`/`auth_provider.dart` source. Its two-gate
+  architecture, accepted OTP-status set, and "logout only clears Gate 2 /
+  unsubscribe clears both gates" behavior are **already identical** to
+  VenueLock's (`app/lib/core/services/subscription_service.dart` +
+  `auth_service.dart`) — logout there only calls `AuthService.logout()`,
+  never touches `SubscriptionService`, so a real code-level "logout silently
+  unsubscribes you" bug was ruled out by inspection.
+- The one structural difference MedRemind's doc calls out as deliberate:
+  their flow-gate is a **reactive state machine** (`main.dart` watches both
+  auth providers on every `build()` and self-corrects if state and screen
+  ever disagree, explicitly to "avoid a whole class of navigation bugs...
+  wrong screen after async gaps"). VenueLock's `app/lib/app/router.dart`
+  used go_router's declarative `redirect` callback **without**
+  `refreshListenable`, meaning `redirect` only re-runs on an explicit
+  navigation call — if `authService`/`subscriptionService` ever change state
+  without a matching `context.go`/`push` right after (an async gap), the
+  user could get stranded on a stale screen until some other navigation
+  happens to fire.
+- **Fix**: added `refreshListenable: Listenable.merge([authService,
+  subscriptionService])` to the `GoRouter` in `router.dart` — now any state
+  change on either service (not just explicit navigations) re-evaluates the
+  `redirect` gate against the current location automatically, closing that
+  class of staleness bug without restructuring to MedRemind's imperative
+  state-machine pattern (go_router's own recommended way to get the same
+  reactivity).
+- `flutter analyze` clean.
+- **Not fully root-caused**: I could not reproduce the exact "stuck at
+  phone/OTP after logout" sequence from static code reading alone — the
+  explicit `context.go('/admin/login')` call already present after logout
+  (in `student_profile_screen.dart`'s Logout action) traces correctly to the
+  login screen on paper. The `refreshListenable` fix closes the most
+  plausible general mechanism (a stale/missed redirect re-evaluation) but if
+  the user hits this again, get exact repro steps (which button was tapped:
+  Logout vs Unsubscribe — they're adjacent destructive-styled tiles on the
+  profile screen and easy to conflate — and whether it's after an explicit
+  in-app logout or after killing/reopening the app).
+
+## 2026-07-18 session
+
+### 24. `app_v2` — full app rebuilt with the same features, new UI/UX/nav
+- User had already run `flutter create` for a new `app_v2/` folder (sibling
+  to `app/`) and asked for it to be built out with identical functionality
+  but "awesome" UI, with explicit sign-off (via clarifying questions) to
+  build it all in one pass and to rework navigation/UX, not just reskin.
+- Delegated the actual build to a background general-purpose agent with a
+  detailed brief covering: the full feature inventory (subscription gate,
+  admin auth, venue management, audience booking, volunteer flow, the
+  just-redesigned unified profile screen), the non-negotiable constraint to
+  keep the live PHP backend contract (`ARIF(VL)/`, documented in
+  `API_USAGE.md`) byte-identical — same endpoints/request shapes/storage
+  keys — and explicit permission to redesign visuals and navigation
+  structure.
+- Verified independently after the agent reported done (its own tool-use
+  count looked suspiciously low for the claimed scope, so didn't take the
+  "0 issues" claim on faith): ran `flutter pub get` + `flutter analyze`
+  myself in `app_v2/` — genuinely clean, 0 issues. Spot-checked file count
+  (39 files vs v1's 33), `main.dart`/`router.dart` wiring, and that the icon
+  assets were actually copied (`assets/icon/app_icon_v2.{png,svg}`,
+  437KB — not a stub).
+- What's structurally different from v1:
+  - Routes reorganized under role-scoped prefixes: `/onboarding/*` (was
+    `/admin/subscribe*`), `/auth/*` (was `/admin/login`,
+    `/admin/forgot-password`), `/admin/*`, `/audience/*` (was `/student/*`),
+    `/volunteer/*`, top-level `/profile` (was `/student/profile`).
+  - New `features/admin/shell/admin_shell_screen.dart`: persistent
+    bottom-nav shell (Venues / Profile tabs) for the admin area — v1 had no
+    direct nav into profile from the admin venue list, this closes that gap.
+    Other admin actions (create venue, scanner, reserve, volunteer review)
+    stay as pushed screens on top of the shell.
+  - New `lib/design/brand_surface.dart` consolidates widgets v1 had
+    duplicated (e.g. the separate `_OtpBox` in both `otp_screen.dart` and
+    `forgot_password_screen.dart`) into one shared implementation.
+  - Two-gate router `redirect` logic (subscription gate, then login gate)
+    ported verbatim in spirit, just against the renamed route paths.
+- What's unchanged on purpose: `core/models/`, `core/services/` — copied
+  with the same endpoints/request bodies/SharedPreferences keys as v1, since
+  the backend and any already-installed v1 app's local storage must stay
+  compatible. Palette-switching (indigo/emerald/rose/amber ×
+  light/dark/system) kept as a feature, just restyled.
+- `app/` (v1) was left completely untouched — still the reference/fallback.
+- **Not yet done**: no screen has been visually run/eyeballed on a device or
+  emulator yet — only `flutter analyze` (static) has been verified. Next
+  session (or right now, if resuming) should `flutter run` app_v2 on the
+  connected device and click through all three role flows before trusting
+  it beyond "compiles."
+
 ## 2026-07-17 session
 
 ### 23. Profile sections un-gated — same fixed layout for every user

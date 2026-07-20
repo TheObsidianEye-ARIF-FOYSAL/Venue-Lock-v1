@@ -55,6 +55,48 @@ class SubscriptionService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Checks whether `phone` already has a registered admin login account
+  /// (`users` table, via `venuelock_check_phone.php`) — i.e. whether this
+  /// person has already been through the subscribe+OTP gate before on some
+  /// device and can safely skip straight to phone+password login instead of
+  /// repeating the BdApps OTP round-trip. Returns `null` on a network error
+  /// so callers can fall back to the normal OTP flow rather than blocking.
+  Future<bool?> checkExistingAccount(String phone) async {
+    final normalized = _normalize(phone);
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/venuelock_check_phone.php'),
+            headers: const {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({'phone': normalized}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return null;
+      final map = _json(response.body);
+      return map['exists'] as bool? ?? false;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Marks `phone` as subscribed on this device without an OTP round-trip —
+  /// used only when [checkExistingAccount] confirms a login account already
+  /// exists for it, meaning the subscribe+OTP gate was already passed once.
+  Future<void> markSubscribedLocally(String phone) async {
+    final normalized = _normalize(phone);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, normalized);
+    _referenceByPhone.remove(normalized);
+    _isSubscribed = true;
+    _phone = normalized;
+    _isLoading = false;
+    _error = null;
+    notifyListeners();
+  }
+
   Future<bool> sendOtp(String phone) async {
     _isLoading = true;
     _error = null;
