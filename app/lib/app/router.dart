@@ -17,6 +17,10 @@ import '../features/student/seat_map/seat_map_screen.dart';
 import '../features/student/booking/booking_screen.dart';
 import '../features/student/entry_pass/entry_pass_screen.dart';
 import '../features/student/profile/student_profile_screen.dart';
+import '../features/student/profile/admin_console_screen.dart';
+import '../features/student/profile/entry_passes_screen.dart';
+import '../features/student/profile/volunteering_screen.dart';
+import '../features/student/profile/appearance_screen.dart';
 import '../features/volunteer/volunteer_join_screen.dart';
 import '../features/volunteer/volunteer_status_screen.dart';
 import '../features/volunteer/volunteer_scanner_screen.dart';
@@ -123,6 +127,18 @@ final router = GoRouter(
     GoRoute(
         path: '/student/profile',
         builder: (ctx, _) => const StudentProfileScreen()),
+    GoRoute(
+        path: '/student/profile/console',
+        builder: (ctx, _) => const AdminConsoleScreen()),
+    GoRoute(
+        path: '/student/profile/passes',
+        builder: (ctx, _) => const EntryPassesScreen()),
+    GoRoute(
+        path: '/student/profile/volunteering',
+        builder: (ctx, _) => const VolunteeringScreen()),
+    GoRoute(
+        path: '/student/profile/appearance',
+        builder: (ctx, _) => const AppearanceScreen()),
     GoRoute(
         path: '/volunteer', builder: (ctx, _) => const VolunteerJoinScreen()),
     GoRoute(
