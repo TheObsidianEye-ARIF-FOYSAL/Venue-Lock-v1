@@ -3,6 +3,53 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — item 37)
+
+### 37. Profile split from one long screen into a hub + 4 dedicated screens
+- Follow-up to item 36. User asked for a hub-and-spoke structure instead of
+  one long scroll: Personal Details stays inline on the main Profile
+  screen; Admin Account, My Bookings, and Volunteer each become their own
+  screen reached by tapping a row; Change Password/Logout/Unsubscribe/
+  Delete Account move to one card at the very end of the main Profile
+  screen (not inside the Admin sub-screen).
+- New shared file `lib/features/student/profile/profile_widgets.dart`:
+  public (non-underscore) versions of the small pieces every profile screen
+  needs — `ProfileSubScaffold` (gradient bg + back arrow + title, shared
+  chrome for all 4 sub-screens), `ProfileScrollBody` (centers content at the
+  same max-width as the hub), `ProfileEmptyState`, `CardDivider`,
+  `MiniStat`, `StatTile`, `SettingsRow` (now takes an optional `subtitle`,
+  used both for plain actions and for nav rows), `SubLabel`, `PassTile`.
+- New screens, each self-contained (loads its own data in `initState`
+  rather than receiving it from the hub, since go_router doesn't cleanly
+  carry non-primitive objects through route params):
+  - `admin_console_screen.dart` → **Admin Console** — subscribed number,
+    venue stats, "Manage Venues". No account actions here anymore.
+  - `entry_passes_screen.dart` → **Entry Passes** — upcoming/past bookings
+    (same logic as the old inline `_AudienceSection`, just self-loading).
+  - `volunteering_screen.dart` → **Volunteering** — active application +
+    live status (self-loading, same as the old inline `_VolunteerSection`).
+  - `appearance_screen.dart` → **Appearance** — palette + light/dark/system,
+    unchanged content, now full-screen instead of an inline card.
+- `router.dart`: 4 new routes nested under the existing profile route —
+  `/student/profile/console`, `/student/profile/passes`,
+  `/student/profile/volunteering`, `/student/profile/appearance`.
+- `student_profile_screen.dart` (the hub) rewritten much shorter: header
+  (unchanged multi-badge logic from item 36) → Personal Details card
+  (unchanged) → one "SECTIONS" card of `SettingsRow` nav rows (each with a
+  live subtitle — e.g. Entry Passes shows "3 bookings" or "No bookings
+  yet") →, only for a logged-in admin, one "ACCOUNT" card at the bottom
+  with Change Password/Logout/Unsubscribe/Delete Account. The hub still
+  loads `_volunteerApp`/`_passes` itself (lighter than before — no longer
+  fetches live volunteer status, just whether an application exists) purely
+  to drive the header badges and nav-row subtitles; each sub-screen
+  independently loads full detail when opened.
+- `flutter analyze` clean across all 6 touched/new files. Not yet run on a
+  device — this is a navigation-structure change on top of item 36's visual
+  rewrite, worth a full click-through: each of the 4 nav rows actually
+  opens its screen, back arrows return to the hub, and the account actions
+  (especially Unsubscribe/Delete Account, which navigate to the subscribe
+  gate on success) still work correctly from their new location.
+
 ## 2026-07-21 session (continued — item 36)
 
 ### 36. Profile screen — full redesign (was the messiest screen in the app)
