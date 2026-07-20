@@ -302,8 +302,20 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     final auth = context.watch<AuthService>();
     final isAdmin = auth.isLoggedIn;
     final profile = context.watch<StudentProfileService>();
-    final role = isAdmin ? _Role.admin : _Role.member;
     final displayName = isAdmin ? auth.displayName : profile.name;
+
+    // A single device/person can be all three at once (admin who also
+    // booked a seat elsewhere, or is volunteering somewhere else) — show
+    // every badge that applies, not just one.
+    final badges = <_RoleBadge>[
+      if (isAdmin) const _RoleBadge('Admin', Icons.admin_panel_settings_rounded),
+      if (_volunteerApp != null)
+        const _RoleBadge('Volunteer', Icons.volunteer_activism_rounded),
+      if (_passes.isNotEmpty)
+        const _RoleBadge('Audience', Icons.confirmation_number_rounded),
+      if (!isAdmin && _volunteerApp == null && _passes.isEmpty)
+        const _RoleBadge('Member', Icons.person_rounded),
+    ];
 
     return Scaffold(
       body: Container(
@@ -342,83 +354,91 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                         child: CircularProgressIndicator(color: Colors.white),
                       )
                     : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 460),
                       child: Column(
                         children: [
-                          _AvatarHeader(name: displayName, role: role)
+                          _ProfileHeader(name: displayName, badges: badges)
                               .animate()
                               .fadeIn(duration: 400.ms)
                               .slideY(begin: 0.1, duration: 400.ms),
-                          const SizedBox(height: 28),
-                          _SectionDivider(label: 'PERSONAL DETAILS'),
-                          const SizedBox(height: 20),
-                          _BookingDetailsCard(
-                            formKey: _formKey,
-                            nameCtrl: _nameCtrl,
-                            emailCtrl: _emailCtrl,
-                            rollCtrl: _rollCtrl,
-                            saving: _saving,
-                            onSave: _save,
-                          ).animate().fadeIn(duration: 400.ms),
-                          if (isAdmin) ...[
-                            const SizedBox(height: 28),
-                            _SectionDivider(label: 'ADMIN ACCOUNT'),
-                            const SizedBox(height: 20),
-                            _AdminSection(
-                              onChangePassword: () =>
-                                  _handleChangePassword(context),
-                              onDeleteAccount: () =>
-                                  _handleDeleteAccount(context),
-                              confirm: (
-                                      {required title,
-                                      required message,
-                                      required confirmLabel,
-                                      destructive = false}) =>
-                                  _confirm(context,
-                                      title: title,
-                                      message: message,
-                                      confirmLabel: confirmLabel,
-                                      destructive: destructive),
+                          const SizedBox(height: 24),
+                          _ProfileSection(
+                            label: 'PERSONAL DETAILS',
+                            delay: 60,
+                            child: _BookingDetailsCard(
+                              formKey: _formKey,
+                              nameCtrl: _nameCtrl,
+                              emailCtrl: _emailCtrl,
+                              rollCtrl: _rollCtrl,
+                              saving: _saving,
+                              onSave: _save,
                             ),
-                          ],
-                          const SizedBox(height: 28),
-                          _SectionDivider(label: 'MY BOOKINGS'),
-                          const SizedBox(height: 20),
-                          _passes.isEmpty
-                              ? const _EmptyState(
-                                  icon: Icons.confirmation_number_outlined,
-                                  message: 'No bookings yet — join a venue '
-                                      'with its code to reserve a seat.',
-                                )
-                              : _AudienceSection(
-                                  passes: _passes,
-                                  onViewPass: (pass) => context.push(
-                                      '/student/pass/${pass.venueId}/${pass.seatId}'),
-                                ).animate().fadeIn(duration: 400.ms),
-                          const SizedBox(height: 28),
-                          _SectionDivider(label: 'VOLUNTEER STATUS'),
-                          const SizedBox(height: 20),
-                          _volunteerApp == null
-                              ? const _EmptyState(
-                                  icon: Icons.volunteer_activism_outlined,
-                                  message: 'Not volunteering anywhere yet — '
-                                      'apply with a venue\'s access code.',
-                                )
-                              : _VolunteerSection(
-                                  app: _volunteerApp!,
-                                  info: _volunteerInfo,
-                                  onViewStatus: () => context.push(
-                                      '/volunteer/status/${_volunteerApp!.venueId}/${_volunteerApp!.volunteerId}'),
-                                ).animate().fadeIn(duration: 400.ms),
-                          const SizedBox(height: 28),
-                          _SectionDivider(label: 'APPEARANCE'),
-                          const SizedBox(height: 20),
-                          const _AppearanceCard()
-                              .animate()
-                              .fadeIn(duration: 400.ms),
+                          ),
+                          if (isAdmin)
+                            _ProfileSection(
+                              label: 'ADMIN ACCOUNT',
+                              delay: 120,
+                              child: _AdminSection(
+                                onChangePassword: () =>
+                                    _handleChangePassword(context),
+                                onDeleteAccount: () =>
+                                    _handleDeleteAccount(context),
+                                confirm: (
+                                        {required title,
+                                        required message,
+                                        required confirmLabel,
+                                        destructive = false}) =>
+                                    _confirm(context,
+                                        title: title,
+                                        message: message,
+                                        confirmLabel: confirmLabel,
+                                        destructive: destructive),
+                              ),
+                            ),
+                          _ProfileSection(
+                            label: 'MY BOOKINGS',
+                            delay: 180,
+                            child: _passes.isEmpty
+                                ? const _EmptyState(
+                                    icon: Icons.confirmation_number_outlined,
+                                    message: 'No bookings yet — join a venue '
+                                        'with its code to reserve a seat.',
+                                  )
+                                : GlassCard(
+                                    padding: const EdgeInsets.all(20),
+                                    child: _AudienceSection(
+                                      passes: _passes,
+                                      onViewPass: (pass) => context.push(
+                                          '/student/pass/${pass.venueId}/${pass.seatId}'),
+                                    ),
+                                  ),
+                          ),
+                          _ProfileSection(
+                            label: 'VOLUNTEER STATUS',
+                            delay: 240,
+                            child: _volunteerApp == null
+                                ? const _EmptyState(
+                                    icon: Icons.volunteer_activism_outlined,
+                                    message: 'Not volunteering anywhere yet '
+                                        '— apply with a venue\'s access '
+                                        'code.',
+                                  )
+                                : _VolunteerSection(
+                                    app: _volunteerApp!,
+                                    info: _volunteerInfo,
+                                    onViewStatus: () => context.push(
+                                        '/volunteer/status/${_volunteerApp!.venueId}/${_volunteerApp!.volunteerId}'),
+                                  ),
+                          ),
+                          _ProfileSection(
+                            label: 'APPEARANCE',
+                            delay: 300,
+                            isLast: true,
+                            child: const _AppearanceCard(),
+                          ),
                         ],
                       ),
                     ),
@@ -429,6 +449,55 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RoleBadge {
+  final String label;
+  final IconData icon;
+  const _RoleBadge(this.label, this.icon);
+}
+
+/// One consistent wrapper for every section on the profile screen: a small
+/// caps label followed by exactly one card. Everything on this screen is
+/// either a section label or the single card under it — no bare buttons or
+/// stat boxes floating directly on the gradient background.
+class _ProfileSection extends StatelessWidget {
+  final String label;
+  final Widget child;
+  final int delay;
+  final bool isLast;
+  const _ProfileSection({
+    required this.label,
+    required this.child,
+    required this.delay,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 10),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 11.5,
+                letterSpacing: 1.1,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          child,
+        ],
+      ).animate().fadeIn(delay: delay.ms, duration: 350.ms).slideY(
+          begin: 0.05, delay: delay.ms, duration: 350.ms),
     );
   }
 }
@@ -450,98 +519,88 @@ class _BookingDetailsCard extends StatelessWidget {
     required this.onSave,
   });
 
+  static const _fieldStyle = TextStyle(color: Colors.white);
+  static InputDecoration _decoration(String label, IconData icon) =>
+      InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.06),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: kError),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: kIndigo.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.person_outline,
-                    color: kIndigo, size: 28),
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Form(
+        key: formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Used to prefill booking and volunteer forms on this device.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.55),
+                fontSize: 12.5,
+                height: 1.4,
               ),
-              const SizedBox(height: 20),
-              Text(
-                'Your Details',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 18),
+            TextFormField(
+              controller: nameCtrl,
+              style: _fieldStyle,
+              textCapitalization: TextCapitalization.words,
+              decoration: _decoration('Full Name', Icons.person_outline),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: emailCtrl,
+              style: _fieldStyle,
+              keyboardType: TextInputType.emailAddress,
+              decoration: _decoration('Email', Icons.email_outlined),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return 'Email is required';
+                }
+                if (!v.contains('@')) {
+                  return 'Enter a valid email';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: rollCtrl,
+              style: _fieldStyle,
+              decoration:
+                  _decoration('Roll Number (optional)', Icons.badge_outlined),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: AuthPrimaryButton(
+                label: 'Save Profile',
+                loading: saving,
+                onTap: onSave,
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Used to prefill booking and volunteer forms on this '
-                'device. You can update it any time.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: Theme.of(context).colorScheme.outline),
-              ),
-              const SizedBox(height: 24),
-              TextFormField(
-                controller: nameCtrl,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty)
-                        ? 'Name is required'
-                        : null,
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Email is required';
-                  }
-                  if (!v.contains('@')) {
-                    return 'Enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: rollCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Roll Number (optional)',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                ),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: saving ? null : onSave,
-                child: saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Save Profile'),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -579,151 +638,132 @@ class _AdminSection extends StatelessWidget {
     final checkedIn =
         venues.fold<int>(0, (acc, v) => acc + v.checkedInCount);
 
-    return Column(
-      children: [
-        _InfoCard(phone: subscription.phone).animate().fadeIn(delay: 150.ms),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: () => context.push('/admin/venues'),
-            icon: const Icon(Icons.dashboard_customize_rounded),
-            label: const Text('Manage Venues'),
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.phone_android_rounded,
+                  color: Colors.white70, size: 18),
+              const SizedBox(width: 10),
+              Text(
+                'Subscribed number',
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.65),
+                    fontSize: 13),
+              ),
+              const Spacer(),
+              Text(
+                subscription.phone ?? '—',
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w700),
+              ),
+            ],
           ),
-        ).animate().fadeIn(delay: 200.ms),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: _StatTile(
-                icon: Icons.dashboard_customize_rounded,
-                value: '$venuesCreated',
-                label: 'Venues Created',
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniStat(value: '$venuesCreated', label: 'Venues'),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.event_seat_rounded,
-                value: '$seatsBooked',
-                label: 'Seats Booked',
+              _miniStatDivider(),
+              Expanded(
+                child: _MiniStat(value: '$seatsBooked', label: 'Booked'),
               ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 250.ms).slideY(
-            begin: 0.08, delay: 250.ms, duration: 400.ms),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _StatTile(
-                icon: Icons.how_to_reg_rounded,
-                value: '$checkedIn',
-                label: 'Checked In',
+              _miniStatDivider(),
+              Expanded(
+                child: _MiniStat(value: '$checkedIn', label: 'Checked In'),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.chair_alt_rounded,
-                value: '$totalCapacity',
-                label: 'Total Capacity',
+              _miniStatDivider(),
+              Expanded(
+                child: _MiniStat(value: '$totalCapacity', label: 'Capacity'),
               ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: AuthPrimaryButton(
+              label: 'Manage Venues',
+              loading: false,
+              onTap: () => context.push('/admin/venues'),
             ),
-          ],
-        ).animate().fadeIn(delay: 320.ms).slideY(
-            begin: 0.08, delay: 320.ms, duration: 400.ms),
-        const SizedBox(height: 24),
-        _ActionTile(
-          icon: Icons.password_rounded,
-          label: 'Change Password',
-          subtitle: 'Update your account password',
-          onTap: onChangePassword,
-        ).animate().fadeIn(delay: 390.ms),
-        const SizedBox(height: 12),
-        _ActionTile(
-          icon: Icons.logout_rounded,
-          label: 'Logout',
-          subtitle: 'Sign out — subscription stays active',
-          onTap: () async {
-            final ok = await confirm(
-              title: 'Logout?',
-              message: 'You will be signed out and redirected to the login '
-                  'screen. Your subscription remains active.',
-              confirmLabel: 'Logout',
-            );
-            if (!ok || !context.mounted) return;
-            await context.read<AuthService>().logout();
-            if (context.mounted) context.go('/admin/login');
-          },
-        ).animate().fadeIn(delay: 400.ms),
-        const SizedBox(height: 12),
-        _ActionTile(
-          icon: Icons.unsubscribe_rounded,
-          label: 'Unsubscribe',
-          subtitle: 'Cancel subscription and sign out',
-          destructive: true,
-          onTap: () async {
-            final ok = await confirm(
-              title: 'Unsubscribe?',
-              message: 'Your subscription will be cancelled and you will '
-                  'be signed out. You will need to subscribe again to use '
-                  'the admin console.',
-              confirmLabel: 'Unsubscribe',
-              destructive: true,
-            );
-            if (!ok || !context.mounted) return;
-            final unsubOk =
-                await context.read<SubscriptionService>().unsubscribe();
-            if (!context.mounted) return;
-            if (unsubOk) {
-              await context.read<AuthService>().logout();
-              if (context.mounted) context.go('/admin/subscribe');
-            } else {
-              final err = context.read<SubscriptionService>().error;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(err ?? 'Unsubscribe failed'),
-                  backgroundColor: kError,
-                  behavior: SnackBarBehavior.floating,
-                ),
+          ),
+          const _CardDivider(),
+          _SettingsRow(
+            icon: Icons.password_rounded,
+            label: 'Change Password',
+            onTap: onChangePassword,
+          ),
+          _SettingsRow(
+            icon: Icons.logout_rounded,
+            label: 'Logout',
+            onTap: () async {
+              final ok = await confirm(
+                title: 'Logout?',
+                message:
+                    'You will be signed out and redirected to the login '
+                    'screen. Your subscription remains active.',
+                confirmLabel: 'Logout',
               );
-            }
-          },
-        ).animate().fadeIn(delay: 460.ms),
-        const SizedBox(height: 12),
-        _ActionTile(
-          icon: Icons.delete_forever_rounded,
-          label: 'Delete Account',
-          subtitle: 'Permanently delete your account and data',
-          destructive: true,
-          onTap: onDeleteAccount,
-        ).animate().fadeIn(delay: 520.ms),
-      ],
+              if (!ok || !context.mounted) return;
+              await context.read<AuthService>().logout();
+              if (context.mounted) context.go('/admin/login');
+            },
+          ),
+          const _CardDivider(),
+          _SettingsRow(
+            icon: Icons.unsubscribe_rounded,
+            label: 'Unsubscribe',
+            destructive: true,
+            onTap: () async {
+              final ok = await confirm(
+                title: 'Unsubscribe?',
+                message:
+                    'Your subscription will be cancelled and you will be '
+                    'signed out. You will need to subscribe again to use '
+                    'the admin console.',
+                confirmLabel: 'Unsubscribe',
+                destructive: true,
+              );
+              if (!ok || !context.mounted) return;
+              final unsubOk =
+                  await context.read<SubscriptionService>().unsubscribe();
+              if (!context.mounted) return;
+              if (unsubOk) {
+                await context.read<AuthService>().logout();
+                if (context.mounted) context.go('/admin/subscribe');
+              } else {
+                final err = context.read<SubscriptionService>().error;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(err ?? 'Unsubscribe failed'),
+                    backgroundColor: kError,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+          ),
+          _SettingsRow(
+            icon: Icons.delete_forever_rounded,
+            label: 'Delete Account',
+            destructive: true,
+            isLast: true,
+            onTap: onDeleteAccount,
+          ),
+        ],
+      ),
     );
   }
-}
 
-enum _Role { admin, member }
-
-extension on _Role {
-  String get label {
-    switch (this) {
-      case _Role.admin:
-        return 'Admin';
-      case _Role.member:
-        return 'Member';
-    }
-  }
-
-  IconData get icon {
-    switch (this) {
-      case _Role.admin:
-        return Icons.admin_panel_settings_rounded;
-      case _Role.member:
-        return Icons.person_rounded;
-    }
-  }
+  Widget _miniStatDivider() => Container(
+        width: 1,
+        height: 32,
+        color: Colors.white.withValues(alpha: 0.12),
+      );
 }
 
 /// Shown in place of the Volunteer/Audience sections when the person hasn't
