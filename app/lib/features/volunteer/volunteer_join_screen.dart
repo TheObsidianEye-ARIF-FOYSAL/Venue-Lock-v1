@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../app/responsive.dart';
@@ -13,6 +14,8 @@ class VolunteerJoinScreen extends StatefulWidget {
   @override
   State<VolunteerJoinScreen> createState() => _VolunteerJoinScreenState();
 }
+
+const _kVolunteerAccent = Color(0xFF10B981);
 
 class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -97,6 +100,17 @@ class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
                           context.canPop() ? context.pop() : context.go('/'),
                     ),
                     const SizedBox(width: 4),
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: _kVolunteerAccent.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: const Icon(Icons.volunteer_activism_rounded,
+                          color: Colors.white, size: 17),
+                    ),
+                    const SizedBox(width: 10),
                     const Text(
                       'Volunteer',
                       style: TextStyle(
@@ -129,14 +143,17 @@ class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: kIndigo.withValues(alpha: 0.1),
+                              color: _kVolunteerAccent.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
                                 Icons.volunteer_activism_outlined,
-                                color: kIndigo,
+                                color: _kVolunteerAccent,
                                 size: 28),
-                          ),
+                          ).animate().scale(
+                              duration: 400.ms,
+                              curve: Curves.easeOutBack,
+                              begin: const Offset(0.6, 0.6)),
                           const SizedBox(height: 20),
                           Text(
                             'Apply to Volunteer',
@@ -217,6 +234,8 @@ class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
                           ),
                           const SizedBox(height: 24),
                           FilledButton(
+                            style: FilledButton.styleFrom(
+                                backgroundColor: _kVolunteerAccent),
                             onPressed: _loading ? null : _apply,
                             child: _loading
                                 ? const SizedBox(
@@ -232,7 +251,7 @@ class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
                       ),
                     ),
                   ),
-                ),
+                ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1),
               ),
               const Spacer(),
             ],

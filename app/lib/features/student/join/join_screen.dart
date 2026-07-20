@@ -15,6 +15,71 @@ class JoinScreen extends StatefulWidget {
   State<JoinScreen> createState() => _JoinScreenState();
 }
 
+class _PassRow extends StatelessWidget {
+  final String venueName;
+  final String seatLabel;
+  final VoidCallback onTap;
+  const _PassRow(
+      {required this.venueName,
+      required this.seatLabel,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(Icons.confirmation_number_rounded,
+                    color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      venueName.isEmpty ? 'Seat $seatLabel' : venueName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Seat $seatLabel',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.white.withValues(alpha: 0.4)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _JoinScreenState extends State<JoinScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeCtrl = TextEditingController();
@@ -214,49 +279,36 @@ class _JoinScreenState extends State<JoinScreen> {
                   padding: EdgeInsets.symmetric(
                     horizontal: Responsive.horizontalPadding(context),
                   ),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-                            child: Text(
-                              'MY ENTRY PASSES',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
-                                    letterSpacing: 1.2,
-                                  ),
+                  child: GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+                          child: Text(
+                            'MY ENTRY PASSES',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.55),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
                             ),
                           ),
-                          for (final pass in _savedPasses)
-                            ListTile(
-                              leading: const Icon(
-                                  Icons.confirmation_number_outlined,
-                                  color: kIndigo),
-                              title: Text(pass.venueName.isEmpty
-                                  ? 'Seat ${pass.seatLabel}'
-                                  : pass.venueName),
-                              subtitle: Text('Seat ${pass.seatLabel}'),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () => context.push(
-                                  '/student/pass/${pass.venueId}/${pass.seatId}'),
-                            ),
+                        ),
+                        for (var i = 0; i < _savedPasses.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 8),
+                          _PassRow(
+                            venueName: _savedPasses[i].venueName,
+                            seatLabel: _savedPasses[i].seatLabel,
+                            onTap: () => context.push(
+                                '/student/pass/${_savedPasses[i].venueId}/${_savedPasses[i].seatId}'),
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
-                ),
+                ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
               ],
               const Spacer(),
             ],
