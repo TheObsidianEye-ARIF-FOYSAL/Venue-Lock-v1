@@ -3,6 +3,39 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — item 35)
+
+### 35. SafeArea/overflow audit after item 34's redesign
+- User asked to confirm SafeArea usage and MediaQuery-based responsiveness
+  across devices after the item 34 visual pass.
+- **SafeArea audit**: `for f in lib/features/**/*.dart; grep -L SafeArea`
+  found 8 files without it. All but 2 use plain `Scaffold(appBar: AppBar(...),
+  body: ...)`, which is already safe-area-correct by default (Scaffold pads
+  the body relative to the AppBar/system chrome without needing an explicit
+  `SafeArea` — only screens with a custom full-bleed header in place of an
+  `AppBar` need one, e.g. the gradient screens, which already all had it:
+  splash, subscribe/phone/OTP, login, join, volunteer join, profile). The
+  other 2 (`scanner_screen.dart`, `volunteer_scanner_screen.dart`) wrap a
+  `Scaffold` in an outer `Stack` for the green-flash overlay, but that
+  overlay is `IgnorePointer`-only cosmetic, not interactive content sitting
+  under system chrome — not a real gap. Conclusion: no missing SafeArea
+  found beyond what was already correct.
+- **Overflow audit**: found 3 genuine gaps — stat-value `Text`/`RichText`
+  widgets with no overflow guard, all following the same pattern (bold
+  numeric text, no `FittedBox`/`maxLines`), which could wrap or clip on
+  narrow devices with large counts:
+  - `venue_list_screen.dart`'s new `_DashStat` (item 34) — the
+    `$totalBooked/$totalCapacity` value in particular can get long.
+  - `student_profile_screen.dart`'s pre-existing `_StatTile`.
+  - `venue_detail_screen.dart`'s pre-existing `_StatCard` (`RichText`).
+  All three wrapped in `FittedBox(fit: BoxFit.scaleDown)` (`alignment:
+  centerLeft` for the `RichText` one, to match its left-aligned column) plus
+  `maxLines: 1` + ellipsis on the label under it.
+- `flutter analyze` clean. Not yet tested on an actual narrow/small device —
+  the fixes are defensive (guard against a failure mode that's plausible but
+  not yet confirmed reproduced), not fixes for a reported live overflow
+  error.
+
 ## 2026-07-21 session (continued — item 34, closes out item 6)
 
 ### 34. Visual redesign pass on the three role landing screens
