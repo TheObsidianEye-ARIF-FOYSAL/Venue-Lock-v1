@@ -3,6 +3,68 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — item 36)
+
+### 36. Profile screen — full redesign (was the messiest screen in the app)
+- User feedback was blunt: profile "looks unrelated," its UI is "disgusting,"
+  and having user details/admin account/manage venues/change password/
+  logout/unsubscribe/delete account/my bookings all crammed onto one screen
+  looked like "garbage." Also a reminder that drove the header rework: one
+  person can be Admin, Audience, *and* Volunteer at the same time — the
+  screen must never collapse that down to a single role.
+- Searched for current (2026) mobile settings/profile UI guidance before
+  redesigning (Android Settings design guidelines, Material 3 grouping
+  patterns) — the actionable takeaways applied: group related items under
+  one heading separated by dividers rather than scattering them as separate
+  boxes; keep primary actions prominent and secondary ones subdued; use
+  whitespace intentionally instead of stacking bordered containers.
+- **Root cause of "looks unrelated"**: the screen mixed a solid white
+  Material `Card` (Personal Details) with translucent dark glass cards
+  (everything else) on the same dark gradient background — visually two
+  different apps stitched together. Fixed by converting `_BookingDetailsCard`
+  to the same dark-glass `GlassCard` + white-styled `TextFormField`s used
+  everywhere else (`student_profile_screen.dart`).
+- **Root cause of "garbage" layout**: Admin Account alone was *eight*
+  separate floating boxes (a phone-number info card, four individually
+  bordered stat tiles across two rows, four individually bordered action
+  buttons) each with their own border/shadow/gap — no grouping at all.
+  Consolidated into one `GlassCard` per section, using new shared widgets:
+  - `_MiniStat` — compact number+label separated by hairline vertical
+    dividers instead of each stat being its own bordered box.
+  - `_SettingsRow` — a plain tappable row (icon + label + chevron, no
+    individual border/background) for Change Password / Logout / Unsubscribe
+    / Delete Account, so they read as one list, not four separate buttons.
+  - `_CardDivider` — hairline divider used *within* a card to separate
+    logical groups (e.g. neutral actions from destructive ones), never
+    between two different cards.
+  - `_ProfileSection` — one wrapper every section now goes through: a small
+    caps label followed by exactly one card, nothing else. Replaces the old
+    per-section `_SectionDivider` + loose children pattern.
+- **Header rework for the "can be multiple roles" reminder**: replaced the
+  single-badge `_AvatarHeader`/`_Role` enum with `_ProfileHeader` +
+  `_RoleBadge`, which renders a `Wrap` of every applicable badge (Admin,
+  Volunteer, Audience — any combination, "Member" only if none apply)
+  instead of picking one. `_Role` enum, `_AvatarHeader`, `_SectionDivider`,
+  `_InfoCard`, and the old `_ActionTile` were all deleted as obsolete once
+  their call sites were replaced (`_InfoCard`'s content — subscribed number
+  — moved inline into the new Admin card).
+- My Bookings section (`_AudienceSection`) previously had no unifying card
+  background of its own (individual pass tiles only) — now wrapped in a
+  `GlassCard` at the call site for the same reason: every section is now
+  exactly one card, never zero or many.
+- `flutter analyze` clean throughout. Not yet visually verified on a device
+  — this was the largest single-file rewrite this session, worth a careful
+  look especially at: the multi-badge header with 1/2/3 badges present, the
+  Admin card's 4-way `_MiniStat` row on a narrow phone, and that every
+  destructive action (Unsubscribe, Delete Account) still triggers its
+  confirmation dialog correctly (logic was preserved, not rewritten, but
+  worth confirming after this much structural churn).
+
+Sources consulted:
+- [Android settings design guidelines](https://source.android.com/docs/core/settings/settings-guidelines)
+- [Settings UI design: Why users can't find what they need](https://www.setproduct.com/blog/settings-ui-design)
+- [Profile Page UI Design: Best Practices, Examples & How to Build One (2026)](https://www.uxpin.com/studio/blog/profile-page-ui-design/)
+
 ## 2026-07-21 session (continued — item 35)
 
 ### 35. SafeArea/overflow audit after item 34's redesign

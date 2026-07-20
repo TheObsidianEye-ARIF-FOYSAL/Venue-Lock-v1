@@ -13,16 +13,16 @@ import '../../../core/services/theme_service.dart';
 import '../../../core/services/volunteer_service.dart';
 import '../../admin/subscription/widgets/auth_widgets.dart';
 
-/// The single profile screen for the whole app, reachable only from the
-/// VenueLock role-picker (SplashScreen) — there is no separate admin-only
-/// profile entry point. Shows sections in a fixed, role-aware order so every
-/// role sees exactly the info that's relevant to them:
-///   1. Avatar header with a role badge (Admin / Volunteer / Audience / Guest)
-///   2. Personal details form (name/email/roll — prefills booking & volunteer
-///      forms on this device)
-///   3. Role-specific status: admin account stats & actions, OR the active
-///      volunteer application, OR saved audience booking passes
-///   4. Appearance (theme) — available to everyone, not just admins
+/// The single profile screen for the whole app. A person can be Admin,
+/// Volunteer, and Audience on the same device at the same time, so the
+/// header shows every applicable role badge (never just one), and every
+/// section below is always present in the same order — Personal Details,
+/// Admin Account (only gated on an actual login session, since that's a
+/// real authenticated account, unlike the other two which are just local
+/// device activity), My Bookings, Volunteer Status, Appearance — each
+/// rendered as exactly one consistently-styled glass card via
+/// [_ProfileSection], with an empty state instead of disappearing when
+/// there's nothing to show yet.
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
 
@@ -1279,40 +1279,6 @@ class _PassTile extends StatelessWidget {
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  final String? phone;
-  const _InfoCard({required this.phone});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.phone_android_rounded,
-              color: Colors.white70, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'Subscribed number',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.65)),
-          ),
-          const Spacer(),
-          Text(
-            phone ?? '—',
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _StatTile extends StatelessWidget {
   final IconData icon;
   final String value;
@@ -1365,67 +1331,6 @@ class _StatTile extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final VoidCallback onTap;
-  final bool destructive;
-  const _ActionTile({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.onTap,
-    this.destructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = destructive ? kError : Colors.white;
-    return Material(
-      color: Colors.white.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 22),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded,
-                  color: Colors.white.withValues(alpha: 0.4)),
-            ],
-          ),
-        ),
       ),
     );
   }
