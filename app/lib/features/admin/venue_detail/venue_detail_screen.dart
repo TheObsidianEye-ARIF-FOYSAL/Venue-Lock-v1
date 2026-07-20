@@ -60,7 +60,9 @@ class _VenueDetailScreenState extends State<VenueDetailScreen> {
           title: const Text('Venue'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/admin/venues'),
+            onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go('/admin/venues'),
           ),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -79,7 +81,9 @@ class _VenueDetailScreenState extends State<VenueDetailScreen> {
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/admin/venues'),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go('/admin/venues'),
         ),
         actions: [
           IconButton(

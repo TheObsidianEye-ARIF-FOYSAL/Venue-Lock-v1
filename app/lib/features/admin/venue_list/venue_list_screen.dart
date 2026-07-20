@@ -23,7 +23,8 @@ class VenueListScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go('/'),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/'),
         ),
         title: Text(
           name.isNotEmpty ? 'Hi, ${name.split(' ').first}' : 'VenueLock',
