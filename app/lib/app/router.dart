@@ -47,16 +47,19 @@ final router = GoRouter(
       return '/admin/subscribe';
     }
     if (subscribed && isSubscribePath) {
-      return !loggedIn ? '/admin/login' : '/';
+      return !loggedIn ? '/admin/login' : '/student/profile';
     }
 
     // Gate 2: phone+password login required once subscribed — except the
-    // forgot-password flow, which must be reachable while logged out.
+    // forgot-password flow, which must be reachable while logged out. Once
+    // logged in, Profile is the app's landing screen (not the role picker) —
+    // it's the one place with a consistent view of who's using the device
+    // and what they can do next (manage venues, switch role, etc).
     if (subscribed && !loggedIn && !isLoginPath && !isForgotPasswordPath) {
       return '/admin/login';
     }
     if (subscribed && loggedIn && isLoginPath) {
-      return '/';
+      return '/student/profile';
     }
 
     return null;
