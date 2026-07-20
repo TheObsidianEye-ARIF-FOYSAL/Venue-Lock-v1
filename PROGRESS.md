@@ -3,6 +3,45 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — item 34, closes out item 6)
+
+### 34. Visual redesign pass on the three role landing screens
+- Follow-up to item 6 from the earlier punch list ("Admin, Audience and
+  Volunteer screen make them awesome") — user confirmed to proceed directly
+  rather than scoping further, so treated "Admin/Audience/Volunteer screen"
+  as each role's primary screen reached from the splash role-picker.
+- **Admin** (`venue_list_screen.dart`) — the worst offender: was a plain
+  white `Scaffold`/`AppBar`/Material `Card` list, visually disconnected from
+  the branded gradient look everywhere else in the app. Rewritten to use
+  `authGradient` background, a custom header (matches join/volunteer screens'
+  pattern), a new 3-up dashboard stat row (`_DashStat`: total venues,
+  booked/capacity, checked-in — aggregated across all venues), glass-style
+  `_VenueCard`s (replacing plain `Card`s) with staggered fade+slide-in per
+  card, and a redesigned empty state using `AuthPrimaryButton`. Functionally
+  identical (same taps go to the same routes) — pure visual layer change.
+- **Audience** (`join_screen.dart`) — already used the gradient+glass look;
+  the one remaining plain-white element was the "My Entry Passes" list
+  (stock `ListTile`s inside a Material `Card`). Replaced with a `GlassCard`
+  and new `_PassRow` widgets matching the venue-card visual language, with a
+  fade-in.
+- **Volunteer** (`volunteer_join_screen.dart`) — already close in shape to
+  Audience's screen but used generic `kIndigo` for its icon/button despite
+  being the "emerald" role everywhere else (splash role tile, per
+  `splash_screen.dart`'s `_RoleTile` colors). Recolored the form icon and
+  submit button to the same emerald (`0xFF10B981`), added a header icon
+  badge (matching Audience's lock-icon badge pattern), and added the
+  fade+slide-in entrance animation the card was missing.
+- `flutter analyze` clean throughout. Not yet visually verified on a device
+  — worth a look on all three screens, especially the new Admin dashboard
+  stat row at narrow phone widths.
+- **Deliberately not touched**: deeper screens in each flow (venue detail/
+  create/scanner for Admin; seat map/booking/entry pass for Audience;
+  status/scanner for Volunteer) — those already inherit branded styling in
+  parts (venue_detail, entry_pass) or are functionally dense enough
+  (seat-map grid interaction) that a visual pass risks touching working
+  logic. If the user wants those "awesome" too, treat as a separate,
+  scoped follow-up rather than assuming it was covered here.
+
 ## 2026-07-21 session (continued — item 33)
 
 ### 33. Profile icon restored on the role-picker screen; dead avatar removed from Admin
