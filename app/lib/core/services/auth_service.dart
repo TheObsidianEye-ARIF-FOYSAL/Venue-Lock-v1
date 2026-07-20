@@ -172,6 +172,35 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Confirms the signed-in admin's current password without changing
+  /// anything — used to gate sensitive edits (e.g. Personal Details) behind
+  /// a password prompt, same idea as Delete Account's confirmation but with
+  /// no side effect on success.
+  Future<String?> verifyPassword(String password) async {
+    if (_phone == null || _token == null) return 'No account is signed in.';
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/venuelock_verify_password.php'),
+            headers: _kHeaders,
+            body: jsonEncode({
+              'phone': _phone,
+              'token': _token,
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      final map = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200) {
+        return (map['error'] as String?) ?? 'Incorrect password.';
+      }
+      return null;
+    } catch (_) {
+      return 'Network error. Please try again.';
+    }
+  }
+
   /// Changes the signed-in user's password, verifying the current one first.
   Future<String?> changePassword(
       String currentPassword, String newPassword) async {

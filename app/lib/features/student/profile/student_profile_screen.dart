@@ -72,7 +72,31 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
+
+    // Only a logged-in admin has a password to confirm with — the local
+    // Audience/Volunteer profile isn't tied to any account.
+    if (context.read<AuthService>().isLoggedIn) {
+      final password = await _promptPassword(context);
+      if (password == null || !mounted) return; // cancelled
+      setState(() => _saving = true);
+      final error =
+          await context.read<AuthService>().verifyPassword(password);
+      if (!mounted) return;
+      if (error != null) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error),
+            backgroundColor: kError,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    } else {
+      setState(() => _saving = true);
+    }
+
     await context.read<StudentProfileService>().save(
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
@@ -87,6 +111,50 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<String?> _promptPassword(BuildContext context) async {
+    final ctrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Password'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: ctrl,
+            obscureText: true,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Password',
+              prefixIcon: Icon(Icons.lock_outline),
+            ),
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Password is required' : null,
+            onFieldSubmitted: (_) {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(ctx, ctrl.text);
+              }
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(ctx, ctrl.text);
+              }
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    return result;
   }
 
   Future<bool> _confirm(
