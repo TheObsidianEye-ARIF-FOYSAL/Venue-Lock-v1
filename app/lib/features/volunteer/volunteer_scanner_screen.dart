@@ -89,7 +89,8 @@ class _VolunteerScannerScreenState extends State<VolunteerScannerScreen> {
             title: const Text('Volunteer Scanner'),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/'),
+              onPressed: () =>
+                  context.canPop() ? context.pop() : context.go('/'),
             ),
           ),
           body: Column(

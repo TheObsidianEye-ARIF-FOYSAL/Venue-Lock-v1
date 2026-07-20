@@ -96,7 +96,9 @@ class _CreateVenueScreenState extends State<CreateVenueScreen> {
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/admin/venues'),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go('/admin/venues'),
         ),
       ),
       body: Column(

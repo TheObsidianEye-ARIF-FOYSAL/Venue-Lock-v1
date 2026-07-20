@@ -71,8 +71,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
           title: const Text('Scanner'),
           leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () =>
-                  context.go('/admin/venue/${widget.venueId}')),
+              onPressed: () => context.canPop()
+                  ? context.pop()
+                  : context.go('/admin/venue/${widget.venueId}')),
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -93,8 +94,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () =>
-                  context.go('/admin/venue/${widget.venueId}'),
+              onPressed: () => context.canPop()
+                  ? context.pop()
+                  : context.go('/admin/venue/${widget.venueId}'),
             ),
           ),
           body: StreamBuilder<List<Seat>>(

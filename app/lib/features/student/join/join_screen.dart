@@ -79,7 +79,8 @@ class _JoinScreenState extends State<JoinScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => context.go('/'),
+                      onPressed: () =>
+                          context.canPop() ? context.pop() : context.go('/'),
                     ),
                     const SizedBox(width: 4),
                     Container(
