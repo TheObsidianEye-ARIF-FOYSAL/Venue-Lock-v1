@@ -272,7 +272,8 @@ class _VenueDetailScreenState extends State<VenueDetailScreen> {
                         ],
                       ),
                       Text(
-                        'Share this code with attendees',
+                        'Share this code with attendees to book a seat, or '
+                        'with volunteers to apply to scan entries here.',
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall
