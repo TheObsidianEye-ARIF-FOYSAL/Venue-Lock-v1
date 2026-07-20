@@ -3,6 +3,94 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — items 28-32)
+
+User gave a 7-item punch list after item 27. Items 1,2,3,5,7 fixed below;
+item 4 verified working (no bug found); item 6 (visual polish of the three
+role screens) deliberately not started — flagged back to the user for scope
+since it's a large, subjective redesign, not a bug fix.
+
+### 28. Misleading "Send OTP" button for already-subscribed returning users
+- Follow-on from item 27: since the phone screen now silently skips OTP for
+  numbers with an existing account, the button still saying "Send OTP" was
+  actively wrong for that path. Changed button label to "Continue" and
+  reworded the helper text above it to cover both outcomes ("Already
+  subscribed? We'll take you straight to login. Otherwise, we'll send a
+  6-digit OTP...") — `phone_screen.dart`.
+
+### 29. Profile is now the one landing screen after login; other entry points removed
+- User: "after log in the opening screen should have profile screen and no
+  other screen should have profile screen." Previously login success went to
+  `'/'` (role picker), and profile was also reachable from the Audience
+  booking screen ("Edit Profile") and the Volunteer join/status screens (a
+  profile icon added in the 2026-07-18 session, item 21) — three ways in,
+  landing screen wasn't one of them.
+- `router.dart`: both "already/just logged in" redirect targets changed from
+  `'/'` to `'/student/profile'` (the subscribe-path-already-logged-in case
+  and the login-path-already-logged-in case).
+- `admin_login_screen.dart`: both `_LoginForm`/`_RegisterForm` `onSuccess`
+  now `context.go('/student/profile')` instead of `context.go('/')`.
+- Removed the other entry points: `booking_screen.dart`'s "Edit Profile"
+  link, and the profile icons in `volunteer_join_screen.dart` and
+  `volunteer_status_screen.dart` (the latter's whole header row, added
+  solely to host that icon, reverted to no header — matches its pre-item-21
+  layout).
+- Since Profile is now often the navigation root (no route below it to pop
+  to), its back arrow is now `context.canPop() ? context.pop() :
+  context.push('/')` — falls back to the role picker instead of a no-op, so
+  a logged-in admin can still reach Audience/Volunteer mode on the same
+  device.
+- Added a "Manage Venues" `FilledButton` at the top of the Admin section
+  (`student_profile_screen.dart`, `_AdminSection`) since Venues is no longer
+  reachable from anywhere else once Profile is the landing screen.
+
+### 30. Admin's Attendees list auto-refreshed every 3s — made manual
+- User: "in Admin screen - attendees keep refreshing automatically. make it
+  manual." `venue_detail_screen.dart` used `AppState.seatsStream()`
+  (`Timer.periodic` every 3s) via `StreamBuilder`. Converted the screen to a
+  one-shot `getSeats()` fetch in `initState`, with a refresh icon button in
+  the AppBar and pull-to-refresh (`RefreshIndicator`) as the only ways to
+  update the list now.
+- Deliberately scoped to just this screen — `seatsStream` itself is
+  untouched and still used (correctly, left as live-polling) by
+  `scanner_screen.dart` (needs live check-in feedback),
+  `seat_reserve_screen.dart` (needs live seat availability while reserving),
+  and `seat_map_screen.dart` (audience needs live seat availability while
+  picking a seat).
+
+### 31. Volunteer Applications review — checked, no bug found
+- User asked to verify this works. Read both sides end to end:
+  `volunteer_review_screen.dart` (list/approve/reject UI, busy-state per
+  row, refresh-after-action) against `venuelock_volunteer_review.php` /
+  `venuelock_volunteer_list.php` (venue-ownership-checked via
+  `admin_phone`, session-authenticated, correct SQL). No bug found — approve/
+  reject correctly update `volunteers.status` and the list re-fetches after
+  each action.
+
+### 32. "How does a volunteer apply? There's no code" — found the actual gap
+- The volunteer apply flow itself was fine (`volunteer_join_screen.dart`
+  already has a 6-char access-code field, identical in shape to the
+  Audience join flow, posting to `venuelock_volunteer_apply.php`). The real
+  gap: `venue_detail_screen.dart`'s Access Code card only said "Share this
+  code with attendees" — never told the admin that the *same* code is what
+  volunteers use to apply. From the admin's side, there was no visible way
+  to know volunteers could join at all. Reworded to "Share this code with
+  attendees to book a seat, or with volunteers to apply to scan entries
+  here."
+
+### Not yet done
+- **Item 6 (visual polish)**: user said the Admin/Audience/Volunteer screens
+  are "boring." Not started — this is a genuinely large, subjective design
+  pass (similar scope to the abandoned `app_v2` rebuild), not a bug fix, so
+  it needs direction from the user (which screens first, how much visual
+  latitude) before starting rather than guessing.
+- None of items 28/29/30/32 have been exercised on-device yet, only
+  `flutter analyze` (clean throughout). Item 29 in particular changes the
+  core post-login navigation shape — worth a full click-through: login →
+  lands on profile → "Manage Venues" → back arrow behavior at each depth →
+  hardware back parity (item 26/5's fix should now also apply cleanly given
+  the new landing screen).
+
 ## 2026-07-21 session
 
 ### 27. Already-subscribed returning admins can skip OTP and go straight to password login — wired to server
