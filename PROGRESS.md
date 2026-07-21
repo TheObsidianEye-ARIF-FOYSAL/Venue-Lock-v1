@@ -3,7 +3,43 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-46: device preview, zip, backend sweep)
+## 2026-07-22 session (items 44-47: device preview, zip, backend sweep)
+
+### 47. Session state, working agreements, and what's still open
+- **Working agreement (user, 2026-07-22): `git add` + `git commit` after
+  *every* change** — one commit per discrete change, don't batch them to the
+  end of a session. Don't push unless asked. Also saved to Claude Code
+  memory as `commit-after-every-change`.
+- Commits made this session: `96bee3d` (device preview), `6425d9a` (zip with
+  web build), `368ff1d` (progress log for items 44-46), plus this entry.
+  Working tree was otherwise clean — the item 39-43 work from the previous
+  session had already been committed by the user as `84d4124 "finishing 2"`.
+- Live-API test data cleaned up: throwaway admin `01999000111` /
+  "ZZ API Test" venue (VDNB6C) was deleted via
+  `venuelock_delete_account.php`. Note that endpoint only deletes the
+  `users` row — the venue/seat/volunteer rows it created are still in
+  `venuelock.db`. Possible cleanup gap worth checking (real users deleting
+  their account leave orphaned venues behind).
+- `adb` dropped near the end of the session (`no devices/emulators found`) —
+  the wireless connection to `adb-P75PHISKJNPRWGLJ-rbgtyQ` needs
+  re-pairing before any further on-device verification.
+- Chrome browser tools are **not** available in this environment (user
+  declined the extension), so the web build could only be verified by
+  serving it locally and checking HTTP responses + compiled JS strings —
+  nobody has actually *looked* at the Device Preview frame in a browser yet.
+  Worth an eyeball on the next Pages deploy.
+
+**Open, in rough priority order:**
+1. Find out what is wiping `ARIF(VL)/venuelock.db` (item 46) — nothing about
+   live data can be trusted until this is understood.
+2. Lock down `venuelock.db` from public HTTP download (item 46).
+3. Upload `bdapps_config.php` + `send_otp.php` + `verify_otp.php` so the OTP
+   error-reporting fix goes live (item 42) — still not deployed as of the
+   end of this session.
+4. Confirm the "Robi and Airtel subscribers only." line under the price
+   should keep mentioning Airtel (item 43).
+5. Decide whether the built PDFs, screenshots, and the 15 MB upload zip
+   belong in git long-term — they are committed now.
 
 ### 44. Device Preview on the desktop web build
 - Ported MedRemind's approach verbatim: `device_preview: ^1.3.1`, plus
