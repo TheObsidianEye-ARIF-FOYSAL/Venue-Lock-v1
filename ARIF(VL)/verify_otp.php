@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 $date_= date("Y-m-d h:i:sa");
 
 $user_otp = $_POST['Otp'];

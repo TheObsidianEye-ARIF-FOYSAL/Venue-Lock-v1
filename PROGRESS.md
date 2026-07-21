@@ -3,6 +3,105 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — items 39-42: BDApps approval, docs, OTP fix)
+
+### 39. BDApps approved VenueLock for TESTING — credentials wired in
+- App is **APP_139127**, API key **9ec9c4e178415f454fa599e5990430cc**
+  (approved for testing only; whitelisted numbers only until we email
+  support@bdapps.com to request Active Production).
+- The four BDApps-facing PHP files in `ARIF(VL)/` were still carrying a
+  *different app's* sample credentials (`APP_128956` /
+  `a0b6805ae4de029d93def2a16d633b4a`, a BMI Calculator demo). Replaced in
+  `send_otp.php`, `verify_otp.php`, `subscriptionNotification.php`,
+  `unsubscribe.php`.
+- `send_otp.php` also had `applicationHash: "BMI Calculator"` and an
+  unrelated Play Store `appCode` — both now say `VenueLock`.
+- Credentials since moved into **`ARIF(VL)/bdapps_config.php`** (gitignored;
+  template at `bdapps_config.example.php`), required by `send_otp.php` and
+  `verify_otp.php`. Created `.gitignore` at repo root for it — the repo had
+  none before.
+- App API base URL: confirmed all four Dart services already default to
+  `https://ruetandroiddevelopers.com/ARIF(VL)`. User pasted the *ARIF(MR)*
+  (MedRemind) URL but confirmed ARIF(VL) is correct. Fixed two stale
+  `ARIF(MR)` references in `app/AUTH_AND_SUBSCRIPTION.md`.
+
+### 40. Landing-page deploy zip
+- `VenueLock_landing_upload.zip` at repo root (~154 KB): contents of
+  `landing/` at the archive root (`index.html`, `manifest.json`,
+  `favicon.png`, `icons/`), mirroring MedRemind's `MedReminder_upload.zip`
+  so it can be unzipped straight into the web root.
+- **Note**: `landing/index.html` links "Launch Web App" at `app/`, which is
+  *not* in the zip (`build/app` is empty here). MedRemind's zip bundled its
+  Flutter web build. Run `flutter build web` and add the output as `app/` if
+  that button needs to work.
+
+### 41. User guide + app description (LaTeX → PDF), with real screenshots
+- Captured 17 screenshots by driving the connected Android device over adb
+  (`adb shell input tap` + `adb exec-out screencap`), saved to
+  `docs/report_VL_app/screenshots/` (plus `app_icon.png` copied from
+  `landing/icons/Icon-512.png`).
+- Sources in `docs/report_VL_app/`: `venuelock_user_guide.tex` (19 pp) and
+  `venuelock_app_description.tex` (5 pp). Built PDFs copied to `docs/`.
+  Rebuild: `pdflatex <file>.tex` from that dir, twice for the TOC.
+  MiKTeX is on PATH at `C:/Local_Disk_D/Code_helper/MiKTeX/...`.
+- Style copied from `med_remind_v2/docs/report_MR_app/medremind_user_guide.tex`
+  (article class, brand-coloured `titlesec` headings, fancyhdr, `[H]` floats).
+- **Test data created on the live backend** while capturing: venue
+  "Annual Seminar 2026", code **B776FL**, 100 seats, one booking
+  (Arif Foysal, General_R3C5). Safe to delete.
+- Two bugs seen while capturing, **not yet fixed**:
+  - Guest seat reservation fails — reserving a seat with a reason returns a
+    red "Could not reserve seat" and the seat stays available. Suspect
+    `ARIF(VL)/venuelock_seat_reserve.php`.
+  - Volunteer "Apply" appears to do nothing — no success/error feedback, and
+    the application never shows up in the admin's Volunteer Applications
+    list. Suspect `ARIF(VL)/venuelock_volunteer_apply.php`.
+  - Because of the second one, the guide's "Approving Volunteers" section is
+    written from intended behaviour with no screenshot.
+
+### 42. "Unable to request OTP" — root-caused, fixed locally, NOT YET DEPLOYED
+- Symptom: entering a number and pressing Continue showed
+  "Unable to request OTP".
+- **Root cause**: the deployed `send_otp.php` echoed only
+  `{"referenceNo": ...}`, discarding BDApps' `statusCode`/`statusDetail`. So
+  any refusal reached the app as `{"referenceNo":null}` and hit the generic
+  error branch in `SubscriptionService.sendOtp` with no reason to show.
+  Verified live: non-whitelisted numbers return exactly that.
+- Rewrote `ARIF(VL)/send_otp.php` (modelled on
+  `med_remind_v2/server/medremind_send_otp.php`): forwards `statusCode` /
+  `statusDetail` verbatim, adds an `alreadyRegistered` flag for BDApps error
+  **E1351** ("already subscribed" — the normal answer for whitelisted test
+  SIMs, which are pre-subscribed and never get an OTP), adds CORS headers
+  (the old file had none, so the web build's calls were browser-blocked),
+  and drops the `user_number.txt` write and the hardcoded fallback number.
+- App side: `SubscriptionService` gained an `alreadyRegistered` getter;
+  `phone_screen.dart` now routes those numbers straight to `/admin/login`
+  instead of erroring. `flutter analyze` clean.
+- **Live round-trip confirmed working** with the new credentials against the
+  *old* deployed script: `send_otp.php` → real SMS to 01897776680 (a
+  whitelisted number, and the one hardcoded in the old script) →
+  `verify_otp.php` with the OTP → `{"subscriptionStatus":"INITIAL CHARGING
+  PENDING"}`, which `subscription_service.dart:196` already accepts. That
+  number is now "initial charging pending" on APP_139127.
+- **⚠ NEXT SESSION — START HERE**: the fix is local only. Verified the live
+  host still has the old code (`bdapps_config.php` → HTTP 404, `send_otp.php`
+  still returns bare `{"referenceNo":null}`). Upload to
+  `ruetandroiddevelopers.com/ARIF(VL)/`: **`bdapps_config.php` first**
+  (both scripts `require` it — missing = fatal), then `send_otp.php` and
+  `verify_otp.php`. Re-check with:
+  `curl -o /dev/null -w "%{http_code}" "https://ruetandroiddevelopers.com/ARIF(VL)/bdapps_config.php"`
+  → should be 200 (blank page), and `send_otp.php` should return
+  `statusCode`/`statusDetail`/`alreadyRegistered` keys.
+- Caution when debugging this: **every `send_otp.php` call sends a real SMS**
+  to the target SIM. Use an empty `user_mobile` to probe the response shape
+  without sending one.
+
+### 43. Airtel price removed from the paywall
+- `app/lib/features/admin/subscription/widgets/auth_widgets.dart:118` now
+  reads `Robi: ৳2.78/day` (was `Robi: ৳2.78/day · Airtel: ৳5.56/day`).
+- The line below it still says "Robi and Airtel subscribers only." — user
+  hasn't said whether that should change too.
+
 ## 2026-07-21 session (continued — item 38)
 
 ### 38. Saving Personal Details now requires a password — admin only

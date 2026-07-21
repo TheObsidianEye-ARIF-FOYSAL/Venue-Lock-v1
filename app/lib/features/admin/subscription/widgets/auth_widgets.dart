@@ -115,7 +115,7 @@ class PricingNotice extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Robi: ৳2.78/day  ·  Airtel: ৳5.56/day',
+            'Robi: ৳2.78/day',
             style: TextStyle(
               color: color,
               fontSize: 14,

@@ -60,6 +60,12 @@ class _PhoneScreenState extends State<PhoneScreen> {
     setState(() => _loading = false);
     if (ok) {
       context.push('/admin/subscribe/otp');
+    } else if (service.alreadyRegistered) {
+      // Pre-subscribed number (BdApps whitelisted test SIM): no OTP is ever
+      // issued for it, so the subscription gate is already satisfied.
+      await service.markSubscribedLocally(phone);
+      if (!mounted) return;
+      context.go('/admin/login');
     } else {
       final err = context.read<SubscriptionService>().error;
       ScaffoldMessenger.of(context).showSnackBar(

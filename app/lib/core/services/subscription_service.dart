@@ -26,8 +26,16 @@ class SubscriptionService extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _sessionLoaded = false;
+  bool _alreadyRegistered = false;
 
   bool get isSubscribed => _isSubscribed;
+
+  /// True when the last [sendOtp] failed only because BdApps reports the
+  /// number as already subscribed to this application (E1351) — which is the
+  /// normal answer for BdApps' pre-subscribed whitelisted test numbers. No
+  /// OTP is ever sent for those, so the caller should treat the number as
+  /// verified rather than showing an error.
+  bool get alreadyRegistered => _alreadyRegistered;
   String? get phone => _phone;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -100,6 +108,7 @@ class SubscriptionService extends ChangeNotifier {
   Future<bool> sendOtp(String phone) async {
     _isLoading = true;
     _error = null;
+    _alreadyRegistered = false;
     notifyListeners();
     final normalized = _normalize(phone);
     try {
@@ -122,6 +131,15 @@ class SubscriptionService extends ChangeNotifier {
       final ref =
           (map['referenceNo'] ?? map['reference_no'] ?? '').toString().trim();
       if (ref.isEmpty) {
+        // Whitelisted test numbers are pre-subscribed, so BdApps answers
+        // E1351 and never sends an OTP. Surface that as a distinct outcome
+        // instead of a dead-end error.
+        if (map['alreadyRegistered'] == true) {
+          _alreadyRegistered = true;
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
         final code = (map['statusCode'] ?? 'UNKNOWN').toString();
         final detail =
             (map['statusDetail'] ?? 'Unable to request OTP').toString();
