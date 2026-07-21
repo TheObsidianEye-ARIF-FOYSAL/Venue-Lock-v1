@@ -3,6 +3,58 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-22 session (items 44-46: device preview, zip, backend sweep)
+
+### 44. Device Preview on the desktop web build
+- Ported MedRemind's approach verbatim: `device_preview: ^1.3.1`, plus
+  `app/lib/core/utils/mobile_web_detector{,_stub,_web}.dart` (conditional
+  import on `dart.library.html`).
+- `main.dart`: `_devicePreviewEnabled = kIsWeb && !isMobileWebBrowser()`
+  wraps `runApp`, and feeds `locale:` / `builder:` on the `MaterialApp.router`.
+  Phones (mobile UA **or** screen width < 900) and native builds skip it.
+- `flutter analyze` clean apart from two pre-existing info lints about
+  `dart:html` being deprecated (MedRemind has the same). `flutter build web
+  --release` succeeds; `DevicePreview`/iPhone/Pixel strings confirmed present
+  in the compiled `main.dart.js`.
+- **GitHub Pages needs no workflow change** — `deploy-web.yml` builds `app/`
+  from source, so it picks this up automatically.
+
+### 45. Server zip now ships the web app too
+- `VenueLock_landing_upload.zip` (~15 MB) = `landing/` contents at the root
+  **plus** the release web build under `app/`.
+- `app/index.html`'s `<base href>` is rewritten from `/` to `./` so the site
+  works from any unzip path, not just the domain root. Verified by unzipping
+  into a subdirectory and serving it: `/venuelock/`, `/venuelock/app/`,
+  `main.dart.js`, `flutter_bootstrap.js`, and the asset manifest all 200.
+- Rebuild recipe: `flutter build web --release`, copy `landing/` + `build/web`
+  into a staging dir as `./` and `./app`, patch the base href, zip.
+
+### 46. Backend sweep — endpoints are FINE, but the live DB lost its data
+- Ran the full flow against the live API with a throwaway admin
+  (01999000111, since deleted): register → login → venue_create →
+  venue_by_code → seats_list → **seat_reserve → `{"ok":true}`** →
+  **volunteer_apply → success**.
+- So the two bugs logged as items 41's "rough edges" are **not** endpoint
+  bugs — both worked perfectly on a freshly created venue.
+- **The actual problem**: `ARIF(VL)/venuelock.db` on the live host contains
+  *only* whatever was written most recently. Every earlier row is gone —
+  admin `arifff`, venue `ss` (58LL6A, Jul 18), and venue "Annual Seminar
+  2026" (B776FL) created from the app that same evening. `venue_by_code`
+  and `volunteer_apply` both answer "not found" for those codes. That is
+  why reserve/volunteer-apply failed *in the app*: they were operating on a
+  venue the server no longer had.
+- Cause not yet determined. Candidates: the host resetting/rolling back the
+  file, an upload overwriting `venuelock.db`, or a permissions problem
+  leaving writes in a copy that later vanishes. **Next session: work out
+  what is wiping this file before trusting any live data.**
+- **Security finding**: `https://ruetandroiddevelopers.com/ARIF(VL)/venuelock.db`
+  is downloadable over HTTP (returns 200). It holds users, bcrypt password
+  hashes, attendee names/emails/roll numbers. Needs an `.htaccess` deny (or
+  move the DB above the web root) before production.
+- Note for future debugging: `venuelock_seats_list.php` takes `venueId`
+  (not `venue_id`), and `venuelock_venue_by_code.php` takes `?code=` via
+  **GET**. Both match what the Dart client sends — no mismatch there.
+
 ## 2026-07-21 session (continued — items 39-42: BDApps approval, docs, OTP fix)
 
 ### 39. BDApps approved VenueLock for TESTING — credentials wired in
