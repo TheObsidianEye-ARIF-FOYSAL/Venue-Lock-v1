@@ -17,8 +17,8 @@ catch(Exception $e){
   
 // Request data
 $requestData = array(
-    "applicationId" => "APP_128956",
-    "password" => "a0b6805ae4de029d93def2a16d633b4a",
+    "applicationId" => "APP_139127",
+    "password" => "9ec9c4e178415f454fa599e5990430cc",
     "referenceNo" => "$referenceNo",
     "otp" => "$user_otp"
 );

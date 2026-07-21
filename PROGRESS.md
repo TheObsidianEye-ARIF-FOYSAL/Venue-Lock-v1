@@ -3,6 +3,36 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
+## 2026-07-21 session (continued — item 38)
+
+### 38. Saving Personal Details now requires a password — admin only
+- User asked that changing profile info require a password.
+- **Constraint**: only a logged-in Admin has a password at all — the
+  Audience/Volunteer "Personal Details" (name/email/roll) is a purely local,
+  device-only profile with no server account behind it
+  (`StudentProfileService`, SharedPreferences), so there's nothing to
+  authenticate against for non-admin users. Scoped the requirement to
+  `AuthService.isLoggedIn` only; non-admin saves behave exactly as before.
+- Backend had no "verify password without changing it" endpoint — only
+  `venuelock_change_password.php`, which actually rotates the password.
+  Added `ARIF(VL)/venuelock_verify_password.php`: session-authenticated
+  (phone+token), checks the supplied password against `password_hash` via
+  `password_verify`, returns `{"ok": true}` or a 401 error — no writes, no
+  side effects, safe to call speculatively.
+- `core/services/auth_service.dart`: new `verifyPassword(String password)`
+  method calling that endpoint.
+- `student_profile_screen.dart`: `_save()` now checks `isLoggedIn` first;
+  if true, shows a new `_promptPassword` dialog (plain password field,
+  Enter-to-submit) before proceeding, calls `verifyPassword`, and aborts
+  with an error snackbar if it's wrong or the dialog is cancelled. Only on
+  success does it proceed to the existing `StudentProfileService.save()`.
+- `flutter analyze` clean (confirmed from the correct `app/` working
+  directory — a stray `cd` to the repo root earlier in this session had
+  `flutter analyze` silently no-op there without erroring, which would have
+  been a false "clean" signal; re-ran from `app/` to get a trustworthy
+  result). Not yet tested against the live server — needs an actual admin
+  account to confirm `venuelock_verify_password.php` round-trips correctly.
+
 ## 2026-07-21 session (continued — item 37)
 
 ### 37. Profile split from one long screen into a hub + 4 dedicated screens
