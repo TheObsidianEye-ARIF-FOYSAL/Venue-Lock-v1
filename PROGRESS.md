@@ -3,7 +3,73 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-52: device preview, zip, docs, README, app name, no-PWA)
+## 2026-07-22 session (items 44-55: device preview, zip, docs, README, app name, no-PWA, auth fixes)
+
+### 55. Logic review — findings NOT yet fixed
+Ordered by severity. None of these are addressed in code yet.
+
+1. **`venuelock_reset_password.php` is a full account takeover.** It is
+   public and takes only `{phone, password}` — no OTP proof, no session. Any
+   caller who knows a registered phone number can set a new password and get
+   back a valid session token. The file's own comment says it trusts the
+   client to have verified an OTP first, but nothing on the server checks
+   that. Fix sketch: have `send_otp.php` record phone↔referenceNo, have
+   `verify_otp.php` mark that reference verified and hand back a short-lived
+   reset token, and require that token here.
+2. **Deleting an account orphans its data.** `venuelock_delete_account.php`
+   deletes only the `users` row; the admin's venues, seats, and volunteer
+   records stay. Because venues are keyed on `admin_phone`, whoever
+   registers that same number next **inherits the previous owner's venues
+   and attendee lists**. Should delete (or reassign) the owned rows in the
+   same transaction.
+3. **Session tokens never expire.** `session_created_at` is written but
+   never checked in `venuelock_require_session`, so a leaked token is valid
+   forever. There is no logout-everywhere beyond a password reset.
+4. **`venuelock.db` is still publicly downloadable** (item 46) — worst of
+   all in combination with #1.
+5. **No rate limiting anywhere** — `venuelock_login.php` and
+   `send_otp.php` can both be hammered.
+
+Checked and found **fine**: volunteer check-in is properly scoped (validates
+volunteer id + venue id + `hash_equals` on the device token + approved
+status before touching a seat); `venuelock_seat_book.php`'s
+`WHERE status = 'available'` genuinely prevents double-booking; admin-only
+endpoints all call `venuelock_require_session`; public endpoints
+(`seats_list`, `venue_by_code`, `venue_get`, `seat_book`) are public by
+design, since attendees have no accounts.
+
+### 54. Re-subscribing after an unsubscribe skipped OTP entirely
+- Reported: unsubscribed via the app, got BdApps' confirmation SMS, then
+  subscribed again and was let straight in — no OTP, no confirmation.
+- Cause: `phone_screen._submit` called `checkExistingAccount(phone)` first
+  and, if a `users` row existed, called `markSubscribedLocally` and skipped
+  the OTP round-trip. Unsubscribing never removes that row, so the shortcut
+  fired for exactly the people who needed to re-subscribe — they got back in
+  without paying.
+- Fix: the shortcut is gone; BdApps is always asked. It either issues an OTP
+  (not currently subscribed) or answers **E1351** (still subscribed), which
+  the `alreadyRegistered` path from item 42 already handles. That path is
+  also what keeps whitelisted pre-subscribed test SIMs working, which was
+  the original reason the shortcut existed.
+- `checkExistingAccount` / `markSubscribedLocally` are still on
+  `SubscriptionService`; only the paywall's use of the former is removed.
+
+### 53. Delete Account went through without a password
+- Reported: the confirm dialog asks for a password, but pressing **Delete
+  Account** with the field empty deleted anyway and landed on the paywall.
+- Two causes, both in `_handleDeleteAccount`
+  (`app/lib/features/student/profile/student_profile_screen.dart`):
+  1. The dialog used a bare `TextField` with no validation, so an empty
+     password was accepted and passed along.
+  2. **`unsubscribe()` ran before `deleteAccount()`.** Unsubscribe clears
+     the local subscription flag, and the router redirects to
+     `/admin/subscribe` the moment that flips — so even when the server
+     refused the delete ("Password required to confirm deletion"), the user
+     was already on the paywall and it *looked* like the account was gone.
+     The account itself was never actually deleted.
+- Fix: password is verified first via `AuthService.verifyPassword`, and only
+  on success does it unsubscribe and delete. The dialog is now a `Form` with
+  a validator, so it will not close on an empty field.
 
 ### 52. Killed the "install this app?" prompt on the web
 - User's complaint: opening the server landing page on a phone made Chrome
