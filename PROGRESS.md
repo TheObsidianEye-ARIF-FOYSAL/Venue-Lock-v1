@@ -3,7 +3,39 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-55: device preview, zip, docs, README, app name, no-PWA, auth fixes)
+## 2026-07-22 session (items 44-57: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+
+### 57. Back button was exiting the app after finishing a flow
+- Reported for venue creation; the same mistake was in four more places.
+- Cause: `context.go` **clears the navigation stack**. Any screen that ended
+  a flow with it left nothing underneath, so the phone's back button popped
+  out of the app entirely.
+- Changed to `pushReplacement` (swaps the finished screen, keeps what was
+  under it):
+  - `create_venue_screen.dart:76` → venue detail (back → venue list)
+  - `booking_screen.dart:101` → entry pass (back → seat map)
+  - `volunteer_join_screen.dart` ×2 → volunteer status
+  - `volunteer_scanner_screen.dart:48` → back to `/volunteer` when access
+    is revoked
+- Also switched two manual back affordances to pop-when-possible:
+  the entry pass's close button and Profile's back arrow (the latter was
+  `context.push('/')`, which stacked a *second* role picker on top of
+  Profile — back then bounced between them).
+- **Deliberately left as `context.go`**: gate transitions (subscribe → login
+  → home), "Go Home" buttons on error states, and logout/delete — these
+  *should* reset the stack.
+- Rule for future screens: `push` to go deeper, `pushReplacement` to finish
+  a step, `go` only when resetting the whole stack on purpose.
+
+### 56. Landing screen after login is the role picker, not Profile
+- Reported: signing in dropped the user on Profile, which reads like a
+  settings page.
+- Changed in three places: the router's post-login redirect, the router's
+  "leaving the subscribe flow while logged in" redirect, and the Sign In /
+  Register success callbacks in `admin_login_screen.dart` — all now go to
+  `'/'` (the role picker). Profile stays reachable from its corner icon.
+- The gates themselves are unchanged: subscription → OTP → login → role
+  picker.
 
 ### 55. Logic review — findings NOT yet fixed
 Ordered by severity. None of these are addressed in code yet.
