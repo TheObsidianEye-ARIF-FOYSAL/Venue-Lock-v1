@@ -188,27 +188,35 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
   Future<void> _handleDeleteAccount(BuildContext context) async {
     final ctrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Account'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'This will permanently delete your account, all data, '
-              'and cancel your subscription.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Enter your password to confirm',
-                prefixIcon: Icon(Icons.lock_outline),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'This will permanently delete your account, all data, '
+                'and cancel your subscription.',
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: ctrl,
+                obscureText: true,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                decoration: const InputDecoration(
+                  labelText: 'Enter your password to confirm',
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
+                validator: (v) => (v == null || v.isEmpty)
+                    ? 'Password is required to delete your account'
+                    : null,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -216,7 +224,12 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               child: const Text('Cancel')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: kError),
-            onPressed: () => Navigator.pop(ctx, true),
+            // Won't close the dialog until a password has actually been typed.
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(ctx, true);
+              }
+            },
             child: const Text('Delete Account'),
           ),
         ],
@@ -248,12 +261,22 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       ),
     );
 
-    if (context.mounted) {
-      await context.read<SubscriptionService>().unsubscribe();
-    }
-    final error = context.mounted
-        ? await context.read<AuthService>().deleteAccount(password: password)
+    // Order matters: confirm the password *before* touching the subscription.
+    // Unsubscribing first would drop the local subscription flag and bounce
+    // the user to the paywall even when deletion was refused — which looked
+    // exactly like a successful delete without a password.
+    String? error = context.mounted
+        ? await context.read<AuthService>().verifyPassword(password)
         : 'No account is signed in.';
+
+    if (error == null && context.mounted) {
+      await context.read<SubscriptionService>().unsubscribe();
+      if (context.mounted) {
+        error = await context.read<AuthService>().deleteAccount(
+              password: password,
+            );
+      }
+    }
 
     if (context.mounted) Navigator.of(context).pop(); // close loader
     if (!context.mounted) return;
