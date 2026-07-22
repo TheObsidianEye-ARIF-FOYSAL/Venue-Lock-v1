@@ -1,11 +1,11 @@
 {
-    "name": "venue_lock_v1",
-    "short_name": "venue_lock_v1",
+    "name": "VenueLock",
+    "short_name": "VenueLock",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#3730A3",
     "theme_color": "#3730A3",
-    "description": "A new Flutter project.",
+    "description": "Cap attendance at an exact seat count — seat booking, QR entry passes, and live check-in.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
