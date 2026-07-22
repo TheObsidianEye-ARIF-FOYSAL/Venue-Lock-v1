@@ -276,17 +276,21 @@
     cells[i].className = 'seat ' + next;
   }, 500);
 
-  // Prefer a locally-hosted APK when this copy of the site ships one (the
-  // server upload zip does; the GitHub Pages build doesn't, and keeps
-  // pointing at the GitHub release instead).
-  fetch('VenueLock.apk', { method: 'HEAD' })
-    .then((res) => {
-      if (!res.ok) return;
-      const btn = document.getElementById('downloadBtn');
-      btn.href = 'VenueLock.apk';
-      btn.setAttribute('download', 'VenueLock.apk');
-    })
-    .catch(() => {});
+  // Prefer an APK hosted next to this page, or one directory up (where the
+  // server keeps it, beside the PHP endpoints). Falls back to the GitHub
+  // release when neither exists — which is the case on GitHub Pages.
+  (async () => {
+    for (const path of ['VenueLock.apk', '../VenueLock.apk']) {
+      try {
+        const res = await fetch(path, { method: 'HEAD' });
+        if (!res.ok) continue;
+        const btn = document.getElementById('downloadBtn');
+        btn.href = path;
+        btn.setAttribute('download', 'VenueLock.apk');
+        return;
+      } catch (_) { /* keep the GitHub release link */ }
+    }
+  })();
 </script>
 </body>
 </html>
