@@ -6,6 +6,13 @@ date_default_timezone_set('Asia/Dhaka');
 
 $appid = "APP_139127";
 $apppassword = "9ec9c4e178415f454fa599e5990430cc";
+
+// Direct APK download used in the subscription response SMS. Must be a
+// working link on a real host — bdapps rejects Drive/GitHub links. Note the
+// parentheses in the ARIF(VL) path are legal in a URL but some SMS clients
+// stop auto-linking at them; a paren-free path is safer if one is available.
+const VENUELOCK_APK_URL = "https://ruetandroiddevelopers.com/ARIF(VL)/VenueLock.apk";
+
 $logger = new Logger();
 
 function readSMSNotification() {
@@ -34,8 +41,12 @@ function readSMSNotification() {
             // This is the address to send SMS to
             $address = $subscriberId;
 
-            // Your app download link
-            $message = "BMIc-তে সাবস্ক্রাইব করার জন্য ধন্যবাদ! অ্যাপটি ডাউনলোড করতে ক্লিক করুন: https://shorturl.at/G2D8Y";
+            // bdapps requires this message to name the app, state its
+            // category, and carry a working direct APK link (Drive/GitHub
+            // links are rejected). Keep it in sync with the submitted FAQ.
+            $message = "VenueLock (Events) — সাবস্ক্রাইব করার জন্য ধন্যবাদ! "
+                . "আসন-ভিত্তিক বুকিং ও QR এন্ট্রি পাস। অ্যাপটি ডাউনলোড করুন: "
+                . VENUELOCK_APK_URL;
 
             $response = $sender->sms($message, $address);
 
