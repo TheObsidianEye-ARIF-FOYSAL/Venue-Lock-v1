@@ -3,9 +3,38 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-50: device preview, zip, backend sweep, docs, README)
+## 2026-07-22 session (items 44-51: device preview, zip, docs, README, app name)
 
-### 50. README rewritten
+### 51. App display name is now "VenueLock" (was `venue_lock_v1`)
+- The Flutter project name was leaking into every user-visible surface.
+  Fixed: `android/app/src/main/AndroidManifest.xml` `android:label`,
+  `ios/Runner/Info.plist` (`CFBundleDisplayName` was "Venue Lock V1",
+  `CFBundleName` was `venue_lock_v1`), `windows/runner/main.cpp` window
+  title, `web/index.html` `<title>` + apple-mobile-web-app-title, and
+  `web/manifest.json` name/short_name (description was still "A new Flutter
+  project").
+- **Not changed**: `applicationId`/`namespace` are still
+  `com.example.venue_lock_v1`, and the pubspec package name is still
+  `venue_lock_v1`. Changing the applicationId breaks upgrades for anyone who
+  already installed the app and needs a matching change wherever the id is
+  registered — deliberately left alone. Worth deciding before any store
+  submission, since `com.example.*` is not publishable on Play.
+- APK and web build regenerated afterwards so both carry the new name.
+
+### 50. APK is hosted separately, not bundled in the zip
+- User hosts it themselves at `ARIF(VL)/VenueLock.apk` — one directory
+  *above* the landing page at `ARIF(VL)/VenueLock/`.
+- `landing/index.html` therefore probes `VenueLock.apk` then
+  `../VenueLock.apk` (HEAD), taking the first that exists, and otherwise
+  keeps the GitHub release link (the GitHub Pages case). Verified against a
+  local server with the APK placed one level up.
+- Zip is back to ~20 MB and contains **no** APK.
+- A fresh arm64 release build is staged at the repo root as `VenueLock.apk`
+  for manual upload; it is **gitignored** (34 MB build artefact, not source).
+  Rebuild with
+  `flutter build apk --release --target-platform android-arm64`.
+
+### 49b. README rewritten
 - Centered header with icon, badges (Flutter / PHP+SQLite / BDApps app id /
   licence), and four quick links (demo, APK, both PDFs).
 - Added: a "Why VenueLock" table, a screenshot row pulled from
@@ -15,7 +44,7 @@ Read this file first when resuming work here after a restart.
   recipe, and a CI table.
 - Every relative link and image path was checked to exist before committing.
 
-### 49. Server zip now carries the APK too
+### 49. Server zip contents (superseded by item 50 — APK removed again)
 - `flutter build apk --release --target-platform android-arm64` → 33.6 MB
   (the default fat APK was 67.5 MB — too heavy for a landing-page download).
   Shipped in the zip as `VenueLock.apk`.
