@@ -104,7 +104,7 @@
     box-shadow:0 50px 90px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.05) inset;}
   .phone::before{content:"";position:absolute;top:16px;left:50%;transform:translateX(-50%);
     width:74px;height:5px;border-radius:99px;background:rgba(255,255,255,.22);z-index:2;}
-  .phone img{border-radius:30px;}
+  .phone img{border-radius:30px;aspect-ratio:9/16;object-fit:cover;object-position:top;}
   .float-card{position:absolute;display:flex;align-items:center;gap:10px;
     padding:11px 15px;border-radius:14px;font-size:12.5px;font-weight:600;
     background:rgba(18,16,42,.94);border:1px solid var(--panel-border);
@@ -180,7 +180,7 @@
     border:1px solid rgba(255,255,255,.13);box-shadow:0 30px 60px -26px rgba(0,0,0,.8);
     transition:transform .2s ease;}
   .shot:hover .frame{transform:translateY(-6px);}
-  .shot .frame img{border-radius:18px;}
+  .shot .frame img{border-radius:18px;aspect-ratio:9/16;object-fit:cover;object-position:top;}
   .shot h4{margin:16px 0 4px;font-size:14.5px;font-weight:700;}
   .shot p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.5;}
   @media (max-width:900px){
@@ -294,7 +294,7 @@
     </div>
     <div class="phone-wrap">
       <div class="phone">
-        <img src="assets/shot-roles.png" alt="VenueLock role picker: Admin, Audience, Volunteer" width="520" height="1067" loading="eager">
+        <img src="assets/shot-roles.png" alt="VenueLock role picker: Admin, Audience, Volunteer" width="520" height="924" loading="eager">
       </div>
       <div class="float-card fc-1">
         <span class="fc-dot" style="background:var(--green);"></span>
@@ -401,22 +401,22 @@
     </div>
     <div class="shots">
       <div class="shot">
-        <div class="frame"><img src="assets/shot-dashboard.png" alt="Admin dashboard listing venues with booking progress" width="520" height="1067" loading="lazy"></div>
+        <div class="frame"><img src="assets/shot-dashboard.png" alt="Admin dashboard listing venues with booking progress" width="520" height="924" loading="lazy"></div>
         <h4>Admin dashboard</h4>
         <p>Every venue, booked count and check-ins at a glance.</p>
       </div>
       <div class="shot">
-        <div class="frame"><img src="assets/shot-seatmap.png" alt="Live seat map with an available seat selected" width="520" height="1067" loading="lazy"></div>
+        <div class="frame"><img src="assets/shot-seatmap.png" alt="Live seat map with an available seat selected" width="520" height="924" loading="lazy"></div>
         <h4>Live seat map</h4>
         <p>Open, booked and reserved seats, section by section.</p>
       </div>
       <div class="shot">
-        <div class="frame"><img src="assets/shot-pass.png" alt="QR entry pass showing seat, section and attendee" width="520" height="1067" loading="lazy"></div>
+        <div class="frame"><img src="assets/shot-pass.png" alt="QR entry pass showing seat, section and attendee" width="520" height="924" loading="lazy"></div>
         <h4>QR entry pass</h4>
         <p>Seat, section and attendee — stored on the phone.</p>
       </div>
       <div class="shot">
-        <div class="frame"><img src="assets/shot-scanner.png" alt="Door scanner with live check-in progress" width="520" height="1067" loading="lazy"></div>
+        <div class="frame"><img src="assets/shot-scanner.png" alt="Door scanner with live check-in progress" width="520" height="924" loading="lazy"></div>
         <h4>Door scanner</h4>
         <p>Camera check-in with a manual fallback per attendee.</p>
       </div>
