@@ -42,19 +42,13 @@ class _PhoneScreenState extends State<PhoneScreen> {
     final phone = _phoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
     final service = context.read<SubscriptionService>();
 
-    // Already have a login account for this number? They passed this gate
-    // once before (an account can't exist without it) — skip the OTP
-    // round-trip and let them go straight to phone+password login.
-    final hasAccount = await service.checkExistingAccount(phone);
-    if (!mounted) return;
-    if (hasAccount == true) {
-      await service.markSubscribedLocally(phone);
-      if (!mounted) return;
-      setState(() => _loading = false);
-      context.go('/admin/login');
-      return;
-    }
-
+    // Always ask BdApps, never the local account table. Owning a login
+    // account only proves this number passed the gate *once* — someone who
+    // has since unsubscribed must subscribe again, and BdApps is the only
+    // thing that knows which it is. It answers one of three ways:
+    //   • sends an OTP           → not currently subscribed, verify below
+    //   • E1351 alreadyRegistered → subscription already active, let them in
+    //   • anything else           → show the reason
     final ok = await service.sendOtp(phone);
     if (!mounted) return;
     setState(() => _loading = false);
