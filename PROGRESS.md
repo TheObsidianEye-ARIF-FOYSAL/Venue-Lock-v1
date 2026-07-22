@@ -3,7 +3,25 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-47: device preview, zip, backend sweep)
+## 2026-07-22 session (items 44-48: device preview, zip, backend sweep, docs links)
+
+### 48. Landing page now links the User Manual and App Details PDFs
+- Both PDFs live in **`landing/`** (copied from `docs/`), which is what makes
+  them reach *both* delivery paths: `deploy-web.yml` does `cp -r landing/.
+  site/`, and the upload zip is built from the same folder.
+- `landing/index.html`: new `#docs` section with two cards, a "Docs" nav
+  link, and footer links. Links are relative (`venuelock_user_guide.pdf`,
+  `venuelock_app_description.pdf`) so they work at any deploy path.
+- **If either PDF is regenerated, re-copy it into `landing/`** — `docs/` is
+  the source of truth, `landing/` holds the published copies.
+- Zip rebuilt (~20 MB) and verified by unzipping into a mock
+  `ARIF(VL)/VenueLock/` and serving it: landing, both PDFs, `app/`, and
+  `main.dart.js` all 200.
+- **Live-site correction**: the deployed landing page is at
+  `https://ruetandroiddevelopers.com/ARIF(VL)/VenueLock/`, *not* under
+  `ARIF(MR)/`. As of this session the server still had the old
+  landing-only zip there, so `app/` 404'd — re-uploading the current zip
+  fixes it.
 
 ### 47. Session state, working agreements, and what's still open
 - **Working agreement (user, 2026-07-22): `git add` + `git commit` after
