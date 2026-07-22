@@ -140,6 +140,9 @@
     <h1>Every seat, <span class="accent">accounted for.</span></h1>
     <p class="sub">VenueLock caps attendance at an exact seat count — book by seat, hand out QR entry passes, and check people in live with a phone camera. No overbooking, no clipboard chaos.</p>
     <div class="cta-row">
+      <!-- Falls back to the GitHub release; swapped to the locally-hosted
+           VenueLock.apk by the script at the end of this file when the site
+           is served from a copy that ships the APK alongside it. -->
       <a class="btn btn-primary" id="downloadBtn" href="https://github.com/TheObsidianEye-ARIF-FOYSAL/Venue-Lock-v1/releases/latest/download/VenueLock.apk">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download for Android
@@ -272,6 +275,18 @@
     states[i] = next;
     cells[i].className = 'seat ' + next;
   }, 500);
+
+  // Prefer a locally-hosted APK when this copy of the site ships one (the
+  // server upload zip does; the GitHub Pages build doesn't, and keeps
+  // pointing at the GitHub release instead).
+  fetch('VenueLock.apk', { method: 'HEAD' })
+    .then((res) => {
+      if (!res.ok) return;
+      const btn = document.getElementById('downloadBtn');
+      btn.href = 'VenueLock.apk';
+      btn.setAttribute('download', 'VenueLock.apk');
+    })
+    .catch(() => {});
 </script>
 </body>
 </html>
