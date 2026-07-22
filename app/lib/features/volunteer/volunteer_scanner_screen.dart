@@ -45,7 +45,7 @@ class _VolunteerScannerScreenState extends State<VolunteerScannerScreen> {
     setState(() => _busy = true);
     final active = await _service.getActiveApplication();
     if (active == null) {
-      if (mounted) context.go('/volunteer');
+      if (mounted) context.pushReplacement('/volunteer');
       return;
     }
 

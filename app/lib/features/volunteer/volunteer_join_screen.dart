@@ -37,7 +37,8 @@ class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
     final active = await _service.getActiveApplication();
     if (!mounted) return;
     if (active != null) {
-      context.go('/volunteer/status/${active.venueId}/${active.volunteerId}');
+      context.pushReplacement(
+          '/volunteer/status/${active.venueId}/${active.volunteerId}');
       return;
     }
     setState(() => _checkingExisting = false);
@@ -66,7 +67,8 @@ class _VolunteerJoinScreenState extends State<VolunteerJoinScreen> {
       );
       return;
     }
-    context.go('/volunteer/status/${result.venueId}/${result.volunteerId}');
+    context.pushReplacement(
+        '/volunteer/status/${result.venueId}/${result.volunteerId}');
   }
 
   @override

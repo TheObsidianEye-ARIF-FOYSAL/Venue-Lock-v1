@@ -415,7 +415,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           color: Colors.white, size: 18),
                       onPressed: () => context.canPop()
                           ? context.pop()
-                          : context.push('/'),
+                          : context.go('/'),
                     ),
                     const Text(
                       'My Profile',

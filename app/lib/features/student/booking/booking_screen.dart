@@ -98,7 +98,9 @@ class _BookingScreenState extends State<BookingScreen> {
         eventDate: _venue?.eventDate,
       ));
       if (!mounted) return;
-      context.go('/student/pass/${widget.venueId}/${widget.seatId}');
+      // Replaces the booking form, keeping the seat map underneath so back
+      // stays inside the app.
+      context.pushReplacement('/student/pass/${widget.venueId}/${widget.seatId}');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

@@ -73,7 +73,9 @@ class _CreateVenueScreenState extends State<CreateVenueScreen> {
             sections: _sections,
             adminId: adminId,
           );
-      if (mounted) context.go('/admin/venue/$venueId');
+      // Replace the wizard rather than resetting the stack, so the phone's
+      // back button returns to the venue list instead of leaving the app.
+      if (mounted) context.pushReplacement('/admin/venue/$venueId');
     } catch (e) {
       if (mounted) {
         setState(() => _publishing = false);

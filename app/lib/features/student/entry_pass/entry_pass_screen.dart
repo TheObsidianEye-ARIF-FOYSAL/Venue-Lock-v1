@@ -94,7 +94,9 @@ class _EntryPassScreenState extends State<EntryPassScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => context.go('/'),
+                    onPressed: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/'),
                   ),
                   const Spacer(),
                   Text(
