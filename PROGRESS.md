@@ -3,7 +3,28 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-51: device preview, zip, docs, README, app name)
+## 2026-07-22 session (items 44-52: device preview, zip, docs, README, app name, no-PWA)
+
+### 52. Killed the "install this app?" prompt on the web
+- User's complaint: opening the server landing page on a phone made Chrome
+  offer to install it as an app. The web build is a **demo only** — real use
+  is the APK — so that prompt should never appear.
+- Installability needs a linked manifest, so both pages drop it:
+  - `landing/index.html` — removed `<link rel="manifest">`.
+  - `app/web/index.html` — removed `<link rel="manifest">` *and* the
+    `mobile-web-app-capable` meta (also fixed the description, still "A new
+    Flutter project").
+  - Both now also `preventDefault()` on `beforeinstallprompt` as a backstop.
+- The zip drops `manifest.json` from both the root and `app/` — verified
+  404 for both after unzipping, while the page, the app, and the PDFs 200.
+- **Careful when regenerating**: `flutter build web` rewrites
+  `build/web/index.html` from `app/web/index.html`, so the fix survives a
+  rebuild — but Flutter still *emits* `build/web/manifest.json`, which the
+  zip script deletes explicitly. Keep that step if the zip is rebuilt by
+  hand.
+- Note this also means the web app can no longer be "added to home screen"
+  as a PWA. That is the intended trade — if a PWA is ever wanted again,
+  restoring the manifest link is all it takes.
 
 ### 51. App display name is now "VenueLock" (was `venue_lock_v1`)
 - The Flutter project name was leaking into every user-visible surface.
