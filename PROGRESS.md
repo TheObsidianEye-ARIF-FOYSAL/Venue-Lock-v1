@@ -3,7 +3,55 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-58: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+## 2026-07-22 session (items 44-59: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+
+### 59. bdapps compliance audit against their review checklist
+**Fixed this session:**
+- **Pricing on the landing page** (was missing entirely). New `#pricing`
+  block + nav link stating the daily charge, that it includes VAT+SC+SD,
+  the operator restriction, and that subscribe/status/unsubscribe all live
+  in the app. Pricing was already on the app's paywall and login screen via
+  `PricingNotice`.
+- **Platform statement** on the landing page: Android + web browser, iOS not
+  supported.
+- **Download link** no longer points at GitHub Releases (bdapps rejects
+  GitHub/Drive links) — now the APK on our own host.
+- **Subscription response SMS** in `subscriptionNotification.php` still read
+  *"BMIc-তে সাবস্ক্রাইব করার জন্য ধন্যবাদ"* with a `shorturl.at` link,
+  inherited from the BMI Calculator backend. Now names VenueLock, states the
+  category, and links `VENUELOCK_APK_URL` (a const at the top of the file).
+- ⚠️ **Airtel's rate (৳5.56) is deliberately omitted** on the owner's
+  instruction, though the checklist asks for both 2.78 and 5.56. Two places
+  to change if bdapps objects: `PricingNotice` in `auth_widgets.dart` and
+  the `.pricing-rates` block in `landing/index.html`.
+
+**Already compliant:** APK filename matches the app name; a dedicated
+landing page exists with download + subscription info; logout redirects to
+the login page.
+
+**Still open — blockers for review:**
+1. **Subscription status check is not implemented.** Nothing ever asks
+   bdapps for the current subscription state; the app trusts a local flag
+   (`venuelock_subscribed_phone` in prefs) until an explicit unsubscribe.
+   The checklist requires subscribe/unsubscribe/**status** to all work.
+2. **Unsubscribe lands on the paywall, not the login page.** The checklist
+   says logged out *and redirected to the login page*. Gate 1 currently
+   forces `/admin/subscribe` for anyone unsubscribed, so the literal
+   requirement can't be met without rethinking that redirect.
+3. **Security items** (from item 55) sit directly under "must not pose a
+   security or privacy risk": the public password-reset endpoint, the
+   world-readable `venuelock.db`, and orphaned data after account deletion.
+4. **`applicationId` is still `com.example.venue_lock_v1`** — reads as
+   placeholder/test data and is not publishable.
+5. **USSD is not wired up.** `UssdReceiver.php` / `UssdSender.php` are
+   vendored but nothing calls them; the checklist verifies USSD separately.
+6. **FAQ not written.** Must be sent to support@bdapps.com, filename
+   matching the app id (`APP_139127`), and charging must match it. The user
+   guideline PDF exists and can be packaged with it.
+7. **Live data check (2026-07-22):** the DB held one venue, "Ruet meetup",
+   owned by `01897776680` — with **zero users**. That is finding #2 from
+   item 55 happening for real: the account was deleted and its venue stayed
+   behind. Also counts as leftover test data, which the checklist forbids.
 
 ### 58. Black screen after Delete Account
 - Reported: deleting left a black screen instead of the subscription
