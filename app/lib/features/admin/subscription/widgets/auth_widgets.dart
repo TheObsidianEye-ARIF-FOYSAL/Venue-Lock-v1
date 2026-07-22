@@ -115,9 +115,11 @@ class PricingNotice extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            // Both operator prices must stay visible and match the submitted
-            // FAQ — a bdapps review requirement, not a design choice.
-            'Robi: ৳2.78/day  ·  Airtel: ৳5.56/day',
+            // Robi only, per the app owner. Note bdapps' review checklist
+            // asks for both operator rates (2.78 / 5.56) — if they push back,
+            // this string and the landing page's pricing block are the two
+            // places to change.
+            'Robi: ৳2.78/day',
             style: TextStyle(
               color: color,
               fontSize: 14,
@@ -126,7 +128,7 @@ class PricingNotice extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Robi and Airtel subscribers only. Available on Android.',
+            'Robi subscribers only. Available on Android and web.',
             style: TextStyle(color: color.withValues(alpha: 0.65), fontSize: 11),
           ),
         ],
