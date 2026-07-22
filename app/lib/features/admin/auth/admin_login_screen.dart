@@ -130,13 +130,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
                                 child: TabBarView(
                                   controller: _tabController,
                                   children: [
+                                    // Both land on the role picker — the
+                                    // app's home — not on Profile.
                                     _LoginForm(
-                                      onSuccess: () =>
-                                          context.go('/student/profile'),
+                                      onSuccess: () => context.go('/'),
                                     ),
                                     _RegisterForm(
-                                      onSuccess: () =>
-                                          context.go('/student/profile'),
+                                      onSuccess: () => context.go('/'),
                                     ),
                                   ],
                                 ),
