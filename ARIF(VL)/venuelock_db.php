@@ -7,8 +7,45 @@ date_default_timezone_set('Asia/Dhaka');
 // *.php files in this folder so other apps using send_otp.php /
 // verify_otp.php / unsubscribe.php are unaffected.
 
+/// Where the SQLite file lives. Deliberately *outside* this folder:
+///  • sitting next to the PHP files it was downloadable over HTTP, exposing
+///    accounts, password hashes and attendee details to anyone;
+///  • it also kept disappearing from that folder (host cleanup or a malware
+///    scanner, cause unconfirmed), and since PDO recreates a missing SQLite
+///    file silently, every account and booking vanished without a single
+///    error in any response.
+/// Falls back to the old location only if the new directory cannot be
+/// created, so a permissions problem degrades instead of breaking.
+function venuelock_db_path(): string {
+    $legacy = __DIR__ . '/venuelock.db';
+    $dir = dirname(__DIR__) . '/venuelock_data';
+
+    if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
+        return $legacy;
+    }
+
+    // Belt and braces in case the directory ends up web-accessible anyway.
+    $htaccess = $dir . '/.htaccess';
+    if (!file_exists($htaccess)) {
+        @file_put_contents($htaccess, "Require all denied\n");
+    }
+
+    $path = $dir . '/venuelock.db';
+
+    // One-time migration: adopt an existing database from the old location.
+    if (!file_exists($path) && file_exists($legacy)) {
+        if (@copy($legacy, $path)) {
+            @rename($legacy, $legacy . '.migrated');
+        } else {
+            return $legacy;
+        }
+    }
+
+    return $path;
+}
+
 function venuelock_db(): PDO {
-    $dbPath = __DIR__ . '/venuelock.db';
+    $dbPath = venuelock_db_path();
     $pdo = new PDO('sqlite:' . $dbPath);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->exec("CREATE TABLE IF NOT EXISTS users (
