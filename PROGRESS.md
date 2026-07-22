@@ -3,7 +3,35 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-59: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+## 2026-07-22 session (items 44-60: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+
+### 60. SOLVED: what was wiping the database (item 46)
+Proved live on 2026-07-22, in four requests:
+
+```
+GET  venuelock.db            → 404   file genuinely absent
+POST venuelock_check_phone   → {"exists":false}   endpoint still fine
+GET  venuelock.db            → 200   file recreated by that request
+GET  venue_by_code?W5BBGJ    → "Venue not found"  data gone
+```
+
+- **The file is being deleted on the server**, and because
+  `new PDO('sqlite:…')` silently creates a missing file — followed by
+  `CREATE TABLE IF NOT EXISTS` rebuilding the schema — the next request
+  brings back an empty database. Nothing ever errors, which is why this
+  went unnoticed through several sessions.
+- Cause of the deletion is still unconfirmed (host cleanup or a malware
+  scanner on shared LiteSpeed hosting are the likely candidates). Worth
+  asking the host.
+- **Mitigation shipped**: `venuelock_db.php` now stores the database in
+  `dirname(__DIR__) . '/venuelock_data/venuelock.db'` — outside the folder
+  being served — creating the directory on demand, dropping a
+  `Require all denied` .htaccess inside it, migrating any database found at
+  the old path (renaming the original to `.migrated`), and falling back to
+  the old location if the directory cannot be created. This also closes the
+  public-download hole from item 55.
+- **Still worth doing**: there is no backup of this database anywhere. Once
+  real data exists, schedule one.
 
 ### 59. bdapps compliance audit against their review checklist
 **Fixed this session:**
