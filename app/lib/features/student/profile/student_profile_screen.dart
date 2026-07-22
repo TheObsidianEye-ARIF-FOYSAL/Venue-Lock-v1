@@ -238,9 +238,16 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     if (confirmed != true || !context.mounted) return;
     final password = ctrl.text;
 
+    // The loader lives on the *root* navigator, and is popped through a
+    // handle captured up front. Deleting logs out and unsubscribes, which
+    // makes the router redirect underneath this dialog — resolving the
+    // navigator afterwards from this screen's context would pop one of those
+    // freshly-redirected pages instead of the dialog, leaving a black screen.
+    final rootNav = Navigator.of(context, rootNavigator: true);
     showDialog(
       context: context,
       barrierDismissible: false,
+      useRootNavigator: true,
       builder: (_) => const PopScope(
         canPop: false,
         child: Center(
@@ -278,10 +285,12 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       }
     }
 
-    if (context.mounted) Navigator.of(context).pop(); // close loader
+    if (rootNav.canPop()) rootNav.pop(); // close loader
     if (!context.mounted) return;
 
     if (error == null) {
+      // Unsubscribing already flipped the gate, so the router is on its way
+      // to the paywall; this just makes the destination explicit.
       context.go('/admin/subscribe');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
