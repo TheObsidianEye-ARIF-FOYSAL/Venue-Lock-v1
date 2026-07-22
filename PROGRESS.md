@@ -3,7 +3,31 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-48: device preview, zip, backend sweep, docs links)
+## 2026-07-22 session (items 44-50: device preview, zip, backend sweep, docs, README)
+
+### 50. README rewritten
+- Centered header with icon, badges (Flutter / PHP+SQLite / BDApps app id /
+  licence), and four quick links (demo, APK, both PDFs).
+- Added: a "Why VenueLock" table, a screenshot row pulled from
+  `docs/report_VL_app/screenshots/`, how-it-works, the roles table, tech
+  stack, quickstart with the `SERVER_BASE_URL` dart-define, backend deploy
+  with a warning not to bulk-upload over `venuelock.db`, the LaTeX rebuild
+  recipe, and a CI table.
+- Every relative link and image path was checked to exist before committing.
+
+### 49. Server zip now carries the APK too
+- `flutter build apk --release --target-platform android-arm64` → 33.6 MB
+  (the default fat APK was 67.5 MB — too heavy for a landing-page download).
+  Shipped in the zip as `VenueLock.apk`.
+- `landing/index.html` ends with a `fetch('VenueLock.apk', {method:'HEAD'})`
+  probe: if the file is there (server copy) the hero button switches to the
+  local download; if not (GitHub Pages) it keeps pointing at the GitHub
+  release. One HTML file serves both deploys.
+- Zip is now ~36 MB: landing + both PDFs + `app/` web build + APK. Verified
+  by unzipping into a mock `ARIF(VL)/VenueLock/` and serving it — all five
+  paths 200 with the right byte counts.
+- **The APK in the zip is a point-in-time build.** Rebuild and re-zip when
+  the app changes, or the download will lag behind the web demo.
 
 ### 48. Landing page now links the User Manual and App Details PDFs
 - Both PDFs live in **`landing/`** (copied from `docs/`), which is what makes
@@ -51,9 +75,11 @@ Read this file first when resuming work here after a restart.
 1. Find out what is wiping `ARIF(VL)/venuelock.db` (item 46) — nothing about
    live data can be trusted until this is understood.
 2. Lock down `venuelock.db` from public HTTP download (item 46).
-3. Upload `bdapps_config.php` + `send_otp.php` + `verify_otp.php` so the OTP
-   error-reporting fix goes live (item 42) — still not deployed as of the
-   end of this session.
+3. ~~Upload the OTP fix~~ **DONE** — user uploaded all three files on
+   2026-07-22. Verified live: `bdapps_config.php` returns 200 and
+   `send_otp.php` now forwards real BDApps errors, e.g.
+   `{"statusCode":"E1342","statusDetail":"...blacklisted to use this
+   application VenueLock."}` instead of a bare null referenceNo.
 4. Confirm the "Robi and Airtel subscribers only." line under the price
    should keep mentioning Airtel (item 43).
 5. Decide whether the built PDFs, screenshots, and the 15 MB upload zip
