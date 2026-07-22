@@ -18,10 +18,12 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="VenueLock — cap attendance at an exact seat count.">
 
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
+  <!-- iOS meta tags & icons. "mobile-web-app-capable" is deliberately
+       omitted: together with a manifest it makes browsers offer to install
+       this page as an app, and the web build is a demo only — real use means
+       installing the APK. -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="VenueLock">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
@@ -30,7 +32,14 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>VenueLock</title>
-  <link rel="manifest" href="manifest.json">
+  <!-- No <link rel="manifest"> on purpose — see the note above. -->
+  <script>
+    // Belt and braces: refuse any install prompt the browser still offers.
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      return false;
+    });
+  </script>
 </head>
 <body>
   <!--

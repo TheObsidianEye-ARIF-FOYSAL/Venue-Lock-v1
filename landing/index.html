@@ -8,7 +8,17 @@
 <title>VenueLock — Every Seat, Accounted For</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="icons/Icon-192.png">
-<link rel="manifest" href="manifest.json">
+<!-- No <link rel="manifest"> on purpose: a manifest makes Chrome offer to
+     install this page as an app. The browser is for the demo only — real use
+     means installing the APK, so the install prompt is suppressed here and
+     in app/index.html. -->
+<script>
+  // Belt and braces: even without a manifest, refuse any install prompt.
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    return false;
+  });
+</script>
 <style>
   :root{
     --indigo-1:#4F46E5; --indigo-2:#3730A3; --indigo-3:#1E1B4B;
