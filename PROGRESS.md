@@ -3,7 +3,67 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-60: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+## 2026-07-22 session (items 44-61: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes, DB relocation, landing redesign)
+
+### Deployment state at the end of this session
+Verified against the live host, not assumed:
+
+| Thing | Where it goes | Status |
+|---|---|---|
+| `venuelock_db.php` | `ARIF(VL)/` | ✅ live — DB now at `/venuelock_data/venuelock.db` |
+| `bdapps_config.php`, `send_otp.php`, `verify_otp.php` | `ARIF(VL)/` | ✅ live — real BDApps errors now surface |
+| `subscriptionNotification.php` | `ARIF(VL)/` | ❌ **not uploaded** — subscribers still get an SMS advertising "BMIc" |
+| `unsubscribe.php` | `ARIF(VL)/` | ❓ unknown — re-upload if the credential change never went up |
+| `VenueLock.apk` | `ARIF(VL)/VenueLock.apk` | ❌ **404** — every download button is broken until it's there |
+| `VenueLock_landing_upload.zip` | unzip into `ARIF(VL)/VenueLock/` | ❌ stale — live page is v4.x, current build is **v5.0.0** |
+
+Check what's deployed with
+`curl -s "https://ruetandroiddevelopers.com/ARIF(VL)/VenueLock/" | head -1`
+— line 1 carries the build marker.
+
+⚠️ **Never bulk-upload the `ARIF(VL)` folder.** Individual files only.
+
+
+
+### 61. Landing page redesign — ended up image-free (v5.0.0)
+Four attempts; the last one is what stuck. Worth reading before adding any
+app screenshot to a web page again.
+
+- **v4.0.0** — redesigned around five real screenshots captured for the user
+  manual (`landing/assets/shot-*.png`), two-column hero with a phone mockup,
+  four-shot gallery. User: *"the screenshots are too long."*
+- **v4.0.1** — recropped 9:20 → 9:16 and pinned `aspect-ratio` +
+  `object-fit:cover` so nothing could distort. Also recropped the hero shot
+  lower, because the first 9:16 window sliced the Volunteer card in half.
+  Still too long.
+- **v4.1.0** — kept the crops, shrank the frames (hero 265→228px, gallery
+  capped at 196px / 150px on phones, two-up instead of one-up). Still too
+  long.
+- **v5.0.0 — screenshots removed entirely**, `landing/assets/` deleted.
+  **Root cause**: phone captures are 9:20. At any width that fits a web
+  layout they read as tall slivers; cropping and scaling only trades one
+  awkward shape for another. Chasing it with CSS was the wrong approach.
+
+**What the page looks like now:**
+- Hero: an **entry pass drawn entirely in CSS** — gradient header, perforated
+  tear line with punched notches, a generated 21×21 QR block (real finder
+  squares, deterministic speckle, encodes nothing), seat/section/attendee
+  fields, "Valid entry pass" badge, tilted, with two floating status chips.
+- The **live seat map got its own section**: 14×7 grid, stage bar, legend,
+  and Booked/Open/Reserved counters that tick as seats change.
+- Roles cards gained per-role bullet lists.
+- Kept from earlier work: how-it-works steps, feature grid, pricing card,
+  docs cards, closing CTA, footer.
+
+**Consequences worth knowing:**
+- The page is now a **single ~33 KB HTML file with zero `<img>` tags**
+  (favicon/icons aside) — nothing to stretch, nothing to go stale when the
+  app's UI changes. Zip back down to ~19.9 MB.
+- **If screenshots are ever wanted again**, don't drop raw captures in.
+  Either crop to a wide 16:9 detail of one part of a screen, or composite
+  several into a single wide image.
+- The user guide PDF still uses the full-height screenshots — correct there,
+  since a portrait page has the room for them.
 
 ### 60. SOLVED: what was wiping the database (item 46)
 Proved live on 2026-07-22, in four requests:
