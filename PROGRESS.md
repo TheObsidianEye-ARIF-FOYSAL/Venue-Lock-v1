@@ -3,7 +3,25 @@
 Running log of work done across Claude Code sessions in this repo. Newest entries on top.
 Read this file first when resuming work here after a restart.
 
-## 2026-07-22 session (items 44-57: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+## 2026-07-22 session (items 44-58: device preview, zip, docs, README, app name, no-PWA, auth + navigation fixes)
+
+### 58. Black screen after Delete Account
+- Reported: deleting left a black screen instead of the subscription
+  screen.
+- Cause: the "Deleting account…" loader is a dialog, and the delete work
+  logs out + unsubscribes — both of which make the router redirect *under*
+  that dialog. `Navigator.of(context).pop()` afterwards resolved to the
+  router's navigator and popped one of the freshly-redirected pages, not the
+  dialog, emptying the stack.
+- Fix: show the loader with `useRootNavigator: true` and close it through a
+  `Navigator.of(context, rootNavigator: true)` handle captured *before* the
+  awaits, guarded by `canPop()`.
+- General rule: any loader dialog covering work that changes auth or
+  subscription state must be opened on and popped from the root navigator,
+  through a handle taken up front.
+- Checked the other dialogs in the app — all are awaited and close
+  themselves via `Navigator.pop(ctx, …)` in their own builder context, so
+  none share this bug.
 
 ### 57. Back button was exiting the app after finishing a flow
 - Reported for venue creation; the same mistake was in four more places.
