@@ -115,7 +115,9 @@ class PricingNotice extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Robi: ৳2.78/day',
+            // Both operator prices must stay visible and match the submitted
+            // FAQ — a bdapps review requirement, not a design choice.
+            'Robi: ৳2.78/day  ·  Airtel: ৳5.56/day',
             style: TextStyle(
               color: color,
               fontSize: 14,
